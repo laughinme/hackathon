@@ -1,4 +1,4 @@
-package com.example.hackathon
+package com.example.hackathon.presentation
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
