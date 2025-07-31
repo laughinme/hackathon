@@ -2,6 +2,7 @@ package com.example.compose
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -274,5 +275,20 @@ fun AppTheme(
     typography = AppTypography,
     content = content
   )
+}
+
+@Composable
+fun PreviewTheme(
+    dynamicColor: Boolean = false,
+    content: @Composable () -> Unit
+) {
+    AppTheme(
+        dynamicColor = dynamicColor,
+        content = {
+            Surface(color = MaterialTheme.colorScheme.background) {
+                content()
+            }
+        }
+    )
 }
 
