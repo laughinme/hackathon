@@ -29,13 +29,12 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
+
     buildFeatures {
         compose = true
         buildConfig = true
@@ -55,6 +54,10 @@ android {
             buildConfigField("String", "BASE_URL", "\"https://hackathon-backend.fly.dev/\"")
         }
     }
+}
+
+kotlin {
+    jvmToolchain(11)
 }
 
 dependencies {
