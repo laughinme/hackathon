@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -89,22 +90,14 @@ fun GreetingScreen() {
             }
             //Кнопка для переход дальше
             Row(modifier = Modifier.fillMaxWidth()
-                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
-                horizontalArrangement = Arrangement.End,
+                .padding(start = 24.dp, end = 24.dp, bottom = 60.dp),
+                horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically) {
-                if (pagerState.currentPage == greetingPages.size - 1) {
-                    TextButton(modifier = Modifier.height(50.dp), onClick = {
-
-
-                        //TODO  Миша сделай тут переход на LogRegScreen
-
-
-
+                    Button(modifier = Modifier.height(60.dp).fillMaxWidth(0.9f), onClick = {
+                    //TODO  Миша сделай тут переход на SignInScreen
                     }) {
-                        Text("Next")
-                    }
-                } else {
-                    Spacer(modifier = Modifier.height(50.dp))
+                    Text("Get Started",
+                        style = MaterialTheme.typography.headlineSmall)
                 }
             }
         }
