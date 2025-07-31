@@ -2,7 +2,6 @@ package com.example.hackathon.presentation.screens.onboardingScreens
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,9 +28,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.compose.PreviewTheme
-import kotlinx.coroutines.launch
-import java.nio.file.WatchEvent
-import kotlin.math.tan
 
 data class GreetingPage(
     val title: String,
