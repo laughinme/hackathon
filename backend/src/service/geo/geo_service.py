@@ -12,6 +12,6 @@ class GeoService:
     ):
         self.cities_repo = cities_repo
         
-    async def list_genres(self):
+    async def list_cities(self):
         genres = await self.cities_repo.list_all()
         return genres

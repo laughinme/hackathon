@@ -19,4 +19,4 @@ async def list_cities(
     # _: Annotated[User, Depends(auth_user)],
     svc: Annotated[GeoService, Depends(get_geo_service)],
 ):
-    return await svc.list_genres()
+    return await svc.list_cities()
