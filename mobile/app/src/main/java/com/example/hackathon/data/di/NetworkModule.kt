@@ -2,6 +2,10 @@ package com.example.hackathon.data.di
 
 import android.content.Context
 import com.example.hackathon.BuildConfig
+import com.example.hackathon.data.remote.network.ApiService
+import com.example.hackathon.data.remote.network.TokenAuthenticator
+import com.example.hackathon.data.remote.network.TokenManager
+import com.example.hackathon.data.remote.network.TokenRefreshApiService
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -9,14 +13,21 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dagger.internal.Provider
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import okhttp3.Cache
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.HttpLoggingInterceptor.Level
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
+import java.util.concurrent.TimeUnit
+import javax.inject.Qualifier
 import javax.inject.Singleton
+
 
 
 @Module
@@ -46,27 +57,103 @@ object NetworkModule {
         return Cache(cacheDir, cacheSize)
     }
 
+    @Singleton
+    @Provides
+    fun provideTokenManager(@ApplicationContext context: Context): TokenManager {
+        return TokenManager(context)
+    }
+
     @Provides
     @Singleton
-    fun provideOkHttpClient(cache: Cache): OkHttpClient {
-        val logging = HttpLoggingInterceptor().apply {
-            level = if (BuildConfig.DEBUG) Level.BASIC else Level.NONE
+    fun provideLoggingInterceptor(): HttpLoggingInterceptor {
+        return HttpLoggingInterceptor().apply {
+            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
         }
+    }
 
+    @Provides
+    @Singleton
+    fun provideAuthInterceptor(tokenManager: TokenManager): Interceptor {
+        return Interceptor { chain ->
+            val accessToken = runBlocking {
+                tokenManager.getAccessToken().first()
+            }
+            val request = chain.request().newBuilder()
+            if (accessToken != null) {
+                request.addHeader("Authorization", "Bearer $accessToken")
+            }
+            chain.proceed(request.build())
+        }
+    }
+
+    @Provides
+    @Singleton
+    fun provideTokenAuthenticator(
+        tokenManager: TokenManager,
+        tokenRefreshService: Provider<TokenRefreshApiService>
+    ): TokenAuthenticator {
+        return TokenAuthenticator(tokenManager, tokenRefreshService)
+    }
+
+    @Qualifier
+    @Retention(AnnotationRetention.BINARY)
+    annotation class UnauthenticatedOkHttpClient
+
+    @Provides
+    @Singleton
+    @UnauthenticatedOkHttpClient
+    fun provideOkHttpClientForTokenRefresh(
+        loggingInterceptor: HttpLoggingInterceptor,
+        cache: Cache
+    ): OkHttpClient {
         return OkHttpClient.Builder()
-            .addInterceptor(logging)
-            // TODO: Другие интерцепторы (например, для аутентификации) здесь же
+            .addInterceptor(loggingInterceptor)
             .cache(cache)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
             .build()
     }
 
     @Provides
     @Singleton
-    fun provideRetrofit(gson: Gson, okHttpClient: OkHttpClient): Retrofit {
+    fun provideOkHttpClient(
+        loggingInterceptor: HttpLoggingInterceptor,
+        authInterceptor: Interceptor,
+        tokenAuthenticator: TokenAuthenticator,
+        cache: Cache
+    ): OkHttpClient {
+        return OkHttpClient.Builder()
+            .addInterceptor(authInterceptor)
+            .addInterceptor(loggingInterceptor)
+            .authenticator(tokenAuthenticator)
+            .cache(cache)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideTokenRefreshApiService(
+        @UnauthenticatedOkHttpClient okHttpClient: OkHttpClient,
+        gson: Gson
+    ): TokenRefreshApiService {
         return Retrofit.Builder()
             .baseUrl(BuildConfig.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create(gson))
             .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
+            .create(TokenRefreshApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideApiService(okHttpClient: OkHttpClient, gson: Gson): ApiService {
+        return Retrofit.Builder()
+            .baseUrl(BuildConfig.BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
+            .create(ApiService::class.java)
     }
 }
