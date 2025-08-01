@@ -35,11 +35,11 @@ class MainViewModel @Inject constructor(
 
     private fun checkUserLoginStatus(): Boolean {
         // return userRepository.isLoggedIn()
-        return false // Для теста
+        return true // Для теста
     }
 
     private fun checkProfileStatus(): Boolean {
         // return userRepository.hasCompletedProfile()
-        return false // Для теста
+        return true // Для теста
     }
 }

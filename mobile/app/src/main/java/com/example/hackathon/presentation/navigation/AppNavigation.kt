@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.example.hackathon.presentation.screens.*
 import com.example.hackathon.presentation.screens.onboardingScreens.*
+import com.example.hackathon.presentation.screens.tabs.*
 
 /**
  * Главный навигационный компонент приложения.
@@ -90,11 +91,12 @@ fun AppNavigation(navController: NavHostController, startDestination: String) {
 
         // --- ГРАФ 3: ОСНОВНОЕ ПРИЛОЖЕНИЕ ---
         navigation(
-            startDestination = Routes.HOME,
+            startDestination = Routes.HOME, // <-- Стартовый маршрут внутри графа
             route = Routes.MAIN_GRAPH
         ) {
             composable(Routes.HOME) {
-                HomeScreen()
+                // Теперь этот маршрут ведет на наш новый главный экран с Bottom Bar
+                MainScreen()
             }
         }
     }
