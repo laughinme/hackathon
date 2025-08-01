@@ -15,7 +15,18 @@ config = Settings() # pyright: ignore[reportCallIssue]
     response_model=UserModel,
     summary='Get user account info'
 )
-async def refresh_tokens(
+async def profile(
+    user: Annotated[User, Depends(auth_user)]
+):
+    return user
+
+
+@router.patch(
+    path='/',
+    response_model=UserModel,
+    summary='Update user info'
+)
+async def update_profile(
     user: Annotated[User, Depends(auth_user)]
 ):
     return user

@@ -1,3 +1,5 @@
 from .table_base import Base
-from .users import User, UserInterface
 # from .auth import *
+from .users import User, UserInterface
+from .books import *
+from .geography import *
