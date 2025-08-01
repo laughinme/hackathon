@@ -1,15 +1,15 @@
 package com.example.hackathon.presentation.screens.onboardingScreens
 
-import androidx.compose.foundation.layout.Box
+import android.content.res.Configuration
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -17,42 +17,48 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.compose.PreviewTheme
+import com.example.hackathon.presentation.viewmodel.SignInViewModel
 
 @Composable
-fun SignInScreen() {
-    Surface(color = MaterialTheme.colorScheme.background) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                OutlinedTextField(
-                    value = "TODO email",
-                    onValueChange = {},
-                    label = { Text("Email") },
-                    placeholder = { Text("Email") }
-                )
-                Spacer(modifier = Modifier.height(15.dp))
-                OutlinedTextField(
-                    value = "TODO password",
-                    onValueChange = {},
-                    label = { Text("Password") },
-                    placeholder = { Text("Password") }
-                )
-                Spacer(modifier = Modifier.height(50.dp))
-                Button(modifier = Modifier.width(160.dp), onClick = {
-                        //TODO Сделать регестрацию и переход на AgePickerScreen
-                }) {
-                    Text("Sign In")
-                }
-                Spacer(modifier = Modifier.height(15.dp))
-                TextButton(onClick = {
-                    //Todo Сделать переход на SignUpScreen
-                }) {
-                    Text("Sign Up")
-                }
-            }
+fun SignInScreen(
+    viewModel: SignInViewModel = hiltViewModel(),
+    onSignInSuccess: () -> Unit,
+    onNavigateToSignUp: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 32.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("Sign In", fontSize = 28.sp)
+        Spacer(Modifier.height(40.dp))
+        OutlinedTextField(
+            value = "", // TODO: Connect to ViewModel state
+            onValueChange = {},
+            label = { Text("Email") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(16.dp))
+        OutlinedTextField(
+            value = "", // TODO: Connect to ViewModel state
+            onValueChange = {},
+            label = { Text("Password") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(32.dp))
+        Button(onClick = {
+            viewModel.onSignInClicked()
+            onSignInSuccess()
+        }, modifier = Modifier.fillMaxWidth()) {
+            Text("Sign In")
+        }
+        TextButton(onClick = onNavigateToSignUp) {
+            Text("Don't have an account? Sign Up")
         }
     }
 }
@@ -61,12 +67,15 @@ fun SignInScreen() {
 @Preview(showBackground = true, name = "Light Theme")
 @Preview(
     showBackground = true,
-    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
     name = "Dark Theme"
 )
 @Composable
 fun SignInPreview() {
     PreviewTheme {
-        SignInScreen()
+        SignInScreen(
+            onSignInSuccess = {},
+            onNavigateToSignUp = {}
+        )
     }
 }

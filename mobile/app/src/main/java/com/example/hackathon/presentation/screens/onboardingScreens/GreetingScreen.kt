@@ -1,5 +1,6 @@
 package com.example.hackathon.presentation.screens.onboardingScreens
 
+import android.content.res.Configuration
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -40,65 +41,50 @@ val greetingPages = listOf(
     GreetingPage("Марк очень крут", "Ну он прям крутейший"),
     GreetingPage("Миша - шиша", "Миша большая шиша")
 )
-
 @Composable
-fun GreetingScreen() {
+fun GreetingScreen(onNavigateToSignUp: () -> Unit, onNavigateToSignIn: () -> Unit) {
     val pagerState = rememberPagerState { greetingPages.size }
-    val scope = rememberCoroutineScope()
-    Surface(color = MaterialTheme.colorScheme.background) {
+    Column(
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        HorizontalPager(state = pagerState, modifier = Modifier.weight(1f)) { pageIndex ->
+            val page = greetingPages[pageIndex]
+            Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                Column {
+                    Text(text = page.title, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(30.dp))
+                    Text(text = page.description, style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(24.dp)
+        ) {
+            repeat(greetingPages.size) { index ->
+                val width = animateDpAsState(targetValue = if (index == pagerState.currentPage) 25.dp else 10.dp, label = "").value
+                Box(
+                    modifier = Modifier
+                        .height(10.dp)
+                        .width(width)
+                        .clip(CircleShape)
+                        .background(if (index == pagerState.currentPage) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
+                )
+            }
+        }
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.weight(1f)
-            ) { pageIndex ->
-                val page = greetingPages[pageIndex]
-
-                //Сама страница заполняемая данными из page
-                Box(modifier = Modifier.fillMaxSize().padding(16.dp),
-                    contentAlignment = Alignment.CenterStart) {
-                    Column(
-                    ) {
-                        Text(
-                            text = page.title,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Spacer(modifier = Modifier.height(30.dp))
-                        Text(
-                            text = page.description
-                        )
-                    }
-                }
-            }
-            //Три точки эти снизу
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.padding(24.dp)
+            Button(
+                modifier = Modifier.height(60.dp).fillMaxWidth(0.9f),
+                onClick = onNavigateToSignUp
             ) {
-                repeat(greetingPages.size) { index ->
-                    val width = animateDpAsState(targetValue = if (index == pagerState.currentPage) 25.dp else 10.dp, label = "indicatin_width").value
-                    Box(
-                        modifier = Modifier
-                            .height(10.dp)
-                            .width(width)
-                            .clip(CircleShape)
-                            .background(if (index == pagerState.currentPage) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary)
-                    )
-                }
+                Text("Get Started", style = MaterialTheme.typography.headlineSmall)
             }
-            //Кнопка для переход дальше
-            Row(modifier = Modifier.fillMaxWidth()
-                .padding(start = 24.dp, end = 24.dp, bottom = 60.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically) {
-                    Button(modifier = Modifier.height(60.dp).fillMaxWidth(0.9f), onClick = {
-                    //TODO  Миша сделай тут переход на SignInScreen
-                    }) {
-                    Text("Get Started",
-                        style = MaterialTheme.typography.headlineSmall)
-                }
+            TextButton(onClick = onNavigateToSignIn) {
+                Text("Already have an account? Sign In")
             }
         }
     }
@@ -108,13 +94,16 @@ fun GreetingScreen() {
 @Preview(showBackground = true, name = "Light Theme")
 @Preview(
     showBackground = true,
-    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
     name = "Dark Theme"
 )
 @Composable
 fun OlympiadItemShortPreview() {
     PreviewTheme {
-        GreetingScreen()
+        GreetingScreen(
+            onNavigateToSignUp = {},
+            onNavigateToSignIn = {}
+        )
     }
 }
 
