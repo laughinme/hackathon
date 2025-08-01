@@ -12,10 +12,12 @@
     "tailwind:watch": "npx tailwindcss -i ./src/input.css -o ./dist/output.css --watch"
   },
   "dependencies": {
+    "axios": "^1.11.0",
     "init": "^0.1.2",
     "lucide-react": "^0.535.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-router-dom": "^7.7.1",
     "recharts": "^3.1.0"
   },
   "devDependencies": {
