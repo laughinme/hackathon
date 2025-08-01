@@ -1,8 +1,8 @@
 from uuid import UUID, uuid4
 from datetime import datetime, date
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import ForeignKey, Integer, Uuid, String, Boolean, DateTime, select, Float, Date, Enum
-from sqlalchemy.dialects.postgresql import BYTEA, ARRAY, ENUM
+from sqlalchemy import ForeignKey, Integer, Uuid, String, Boolean, DateTime, select, Float, Date
+from sqlalchemy.dialects.postgresql import BYTEA, ENUM
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.auth import Role
@@ -42,8 +42,15 @@ class User(TimestampMixin, Base):
     banned: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     
     
-    # def set_location(self, lat: float, lon: float):
-    #     self.location = func.ST_SetSRID(func.ST_MakePoint(lon, lat), 4326)
+    @property
+    def age(self) -> int | None:
+        if not self.birth_date:
+            return None
+        today = date.today()
+        return (
+            today.year - self.birth_date.year
+            - ((today.month, today.day) < (self.birth_date.month, self.birth_date.day))
+        )
 
     @classmethod
     async def from_id(cls, session: AsyncSession, user_id: UUID | str) -> "User | None":
