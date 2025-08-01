@@ -1,11 +1,12 @@
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, date
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import ForeignKey, Integer, Uuid, String, Boolean, DateTime, select, Float
-from sqlalchemy.dialects.postgresql import BYTEA, ARRAY
+from sqlalchemy import ForeignKey, Integer, Uuid, String, Boolean, DateTime, select, Float, Date, Enum
+from sqlalchemy.dialects.postgresql import BYTEA, ARRAY, ENUM
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.auth import Role
+from domain.users import Gender
 from ..common import dist_expression
 from ..table_base import Base
 from ..mixins import TimestampMixin
@@ -25,7 +26,8 @@ class User(TimestampMixin, Base):
     username: Mapped[str | None] = mapped_column(String, nullable=True)
     avatar_url: Mapped[str | None] = mapped_column(String, nullable=True)
     bio: Mapped[str | None] = mapped_column(String, nullable=True)
-    favorite_genres: Mapped[list[str]] = mapped_column(ARRAY(String, dimensions=1), nullable=False, default=[])
+    birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    gender: Mapped[Gender | None] = mapped_column(ENUM(Gender), nullable=True)
     
     # Geography
     city_id: Mapped[int | None] = mapped_column(
