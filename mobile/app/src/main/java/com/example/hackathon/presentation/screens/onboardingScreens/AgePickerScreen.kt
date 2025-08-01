@@ -1,43 +1,56 @@
 package com.example.hackathon.presentation.screens.onboardingScreens
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.shape.RoundedCornerShape
+import android.util.Log
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import com.commandiron.wheel_picker_compose.WheelDateTimePicker
-import com.commandiron.wheel_picker_compose.core.TimeFormat
-import com.commandiron.wheel_picker_compose.core.WheelPickerDefaults
+import androidx.compose.ui.unit.sp
+import com.commandiron.wheel_picker_compose.WheelDatePicker
 import com.example.compose.PreviewTheme
-import java.time.LocalDateTime
 
 // USES https://github.com/commandiron/WheelPickerCompose
+val tag = "AgePickerScreen"
 
 @Composable
 fun AgePickerScreen() {
-    WheelDateTimePicker(
-        startDateTime = LocalDateTime.of(
-            2025, 10, 20, 5, 30
-        ),
-        minDateTime = LocalDateTime.now(),
-        maxDateTime = LocalDateTime.of(
-            2025, 10, 20, 5, 30
-        ),
-        timeFormat = TimeFormat.AM_PM,
-        size = DpSize(200.dp, 100.dp),
-        rowCount = 5,
-        textStyle = MaterialTheme.typography.titleSmall,
-        textColor = Color(0xFFffc300),
-        selectorProperties = WheelPickerDefaults.selectorProperties(
-            enabled = true,
-            shape = RoundedCornerShape(0.dp),
-            color = Color(0xFFf1faee).copy(alpha = 0.2f),
-            border = BorderStroke(2.dp, Color(0xFFf1faee))
-        )
-    ) { }
+    Column(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxWidth().weight(1f),
+            contentAlignment = Alignment.Center){
+            Text("Choose your age",
+                fontSize = 25.sp)
+        }
+        Box(modifier = Modifier.fillMaxWidth().weight(1f),
+            contentAlignment = Alignment.Center) {
+            WheelDatePicker { snappedDateTime ->
+                Log.d(tag, "Выбранная дата рождения: $snappedDateTime")
+            }
+        }
+        Box(modifier = Modifier.fillMaxWidth().weight(1f).padding(bottom = 60.dp),
+            contentAlignment = Alignment.BottomCenter) {
+
+            Button(modifier = Modifier.height(60.dp).fillMaxWidth(0.9f), onClick = {
+
+
+                //TODO  Миша сделай тут переход на GenderPickerScreen
+
+
+            }) {
+                Text("Continue",
+                    style = MaterialTheme.typography.headlineSmall)
+            }
+        }
+    }
 }
 
 @Preview(showBackground = true, name = "Light Theme")
