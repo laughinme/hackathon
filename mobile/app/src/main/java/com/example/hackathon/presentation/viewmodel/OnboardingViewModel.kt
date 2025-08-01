@@ -93,7 +93,7 @@ class OnboardingViewModel @Inject constructor(
     }
 
     //=========================================
-    //             Всё для City
+    //          Всё для genresPicker
     //=========================================
 
     private val _selectedGenres = MutableStateFlow<Set<String>>(emptySet())
