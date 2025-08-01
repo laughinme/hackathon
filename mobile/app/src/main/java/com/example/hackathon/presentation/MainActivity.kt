@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.example.compose.AppTheme
 import com.example.hackathon.presentation.navigation.AppNavigation
+import com.example.hackathon.presentation.screens.onboardingScreens.GreetingScreen
 import com.example.hackathon.presentation.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -37,6 +38,7 @@ class MainActivity : ComponentActivity() {
                         navController = navController,
                         startDestination = startDestination
                     )
+                    GreetingScreen(onNavigateToSignUp = {}, onNavigateToSignIn = {})
                 }
             }
         }

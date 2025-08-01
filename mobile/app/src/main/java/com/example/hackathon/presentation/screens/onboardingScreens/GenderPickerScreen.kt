@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
@@ -16,18 +17,26 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.PreviewTheme
+import com.example.hackathon.presentation.viewmodel.OnboardingViewModel
 
 @Composable
-fun GenderPickerScreen(onNext: () -> Unit) {
+fun GenderPickerScreen(
+    viewModel: OnboardingViewModel = hiltViewModel(),
+    onNext: () -> Unit) {
     val genders = listOf("Male", "Female", "Other")
-    //var selectedGender TODO реализовать эту переменную во ViewModel
+    val selectedGender by viewModel.selectedGender.collectAsStateWithLifecycle()
+
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
             Text(text = "Choose your gender", fontSize = 30.sp)
@@ -35,9 +44,20 @@ fun GenderPickerScreen(onNext: () -> Unit) {
         Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 genders.forEach { gender ->
+                    val isSelected = (gender == selectedGender)
                     OutlinedButton(
-                        onClick = {},//TODO <- тут вставить функцию из ViewModel для изменения selectedGender
-                        modifier = Modifier.width(110.dp).height(55.dp)
+                        onClick = {
+                            viewModel.onSelectedGenderChanged(newGender = gender)
+                        },
+                        colors = if (isSelected) {
+                            ButtonDefaults.outlinedButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        } else {
+                            ButtonDefaults.outlinedButtonColors()
+                        },
+                        modifier = Modifier.width(110.dp).height(55.dp).offset(x = (-1 * genders.indexOf(gender)).dp).zIndex(if (isSelected) 1f else 0f)
                     ) {
                         Text(text = gender)
                     }
@@ -45,7 +65,11 @@ fun GenderPickerScreen(onNext: () -> Unit) {
             }
         }
         Box(modifier = Modifier.weight(1f).fillMaxWidth().padding(bottom = 60.dp), contentAlignment = Alignment.BottomCenter){
-            Button(modifier = Modifier.height(60.dp).fillMaxWidth(0.9f), onClick = onNext) {
+            Button(modifier = Modifier.height(60.dp).fillMaxWidth(0.9f),
+                onClick = {
+                viewModel.onGenderPickerClicked()
+                onNext
+                }) {
                 Text("Continue", style = MaterialTheme.typography.headlineSmall)
             }
         }
