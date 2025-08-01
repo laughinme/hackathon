@@ -14,17 +14,24 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.PreviewTheme
+import com.example.hackathon.presentation.viewmodel.OnboardingViewModel
 
 @Composable
-fun GenresPickerScreen(onProfileComplete: () -> Unit) {
+fun GenresPickerScreen(
+    viewModel: OnboardingViewModel = hiltViewModel(),
+    onProfileComplete: () -> Unit) {
     val allGenres = listOf("Рок", "Джаз", "Хип-хоп", "Классика", "Поп", "Электроника", "Регги")
-    //val selecredGenres TODO реализовать во ViewModel тип данных set
+    val selectedGenres by viewModel.selectedGenres.collectAsStateWithLifecycle()
+
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
             Text("Choose your favorite genres", fontSize = 25.sp, modifier = Modifier.padding(horizontal = 16.dp))
@@ -33,15 +40,17 @@ fun GenresPickerScreen(onProfileComplete: () -> Unit) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), maxItemsInEachRow = 3) {
                 allGenres.forEach { genre ->
                     FilterChip(
-                        selected = false, //TODO заменить на genre in selectedGenres.value
-                        onClick = { /* TODO */ },
+                        selected = genre in selectedGenres,
+                        onClick = { viewModel.onSelectedGenre(genre = genre) },
                         label = { Text(genre) }
                     )
                 }
             }
         }
         Box(modifier = Modifier.fillMaxWidth().weight(1f).padding(bottom = 60.dp), contentAlignment = Alignment.BottomCenter){
-            Button(modifier = Modifier.height(60.dp).fillMaxWidth(0.9f), onClick = onProfileComplete) {
+            Button(modifier = Modifier.height(60.dp).fillMaxWidth(0.9f), onClick = {
+                viewModel.onGenrePickerClicked()
+                onProfileComplete}) {
                 Text("Continue", style = MaterialTheme.typography.headlineSmall)
             }
         }

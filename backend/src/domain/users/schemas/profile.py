@@ -1,0 +1,58 @@
+from typing import Annotated
+from pydantic import BaseModel, Field, EmailStr, confloat, model_validator, HttpUrl, field_validator
+from datetime import date
+
+from ..enums import Gender
+
+
+class UserModel(BaseModel):
+    """User account representation."""
+
+    email: EmailStr = Field(..., description="User e-mail")
+    
+    username: str | None = Field(None, description="User's display name")
+    avatar_url: HttpUrl | None = Field(None)
+    bio: str | None = Field(None)
+    birth_date: date | None = Field(None)
+    gender: Gender | None = Field(None)
+    
+    # favorite_genres: list[int] = Field(..., description='List of genres ids')
+    
+    city_id: int | None = Field(None)
+    latitude: Annotated[float, confloat(ge=-90, le=90)] | None = Field(None)
+    longitude: Annotated[float, confloat(ge=-90, le=90)] | None = Field(None)
+    
+    is_onboarded: bool
+    banned: bool
+
+
+class UserPatch(BaseModel):
+    username: str | None = Field(None, description="User's display name")
+    avatar_url: str | None = Field(None)
+    bio: str | None = Field(None)
+    birth_date: date | None = Field(None)
+    gender: Gender | None = Field(None)
+    
+    city_id: int | None = Field(None)
+    
+    latitude: Annotated[float, confloat(ge=-90, le=90)] | None = Field(None)
+    longitude: Annotated[float, confloat(ge=-180, le=180)] | None = Field(None)
+
+    @model_validator(mode='after')
+    def _coords_integrity(self):
+        if (self.latitude is None) ^ (self.longitude is None):
+            raise ValueError('Both coordinates must be passed')
+        return self
+
+
+class GenresPatch(BaseModel):
+    favorite_genres: set[int] = Field(
+        ..., description='List of genres ids', min_length=1
+    )
+    
+    @field_validator('favorite_genres')
+    @classmethod
+    def _genres(cls, v):
+        if v is not None and len(set(v)) != len(v):
+            raise ValueError('Ids in favorite_genres must be unique')
+        return v

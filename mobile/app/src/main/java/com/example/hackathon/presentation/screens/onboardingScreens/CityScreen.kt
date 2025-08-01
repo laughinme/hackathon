@@ -17,19 +17,27 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.PreviewTheme
+import com.example.hackathon.presentation.viewmodel.OnboardingViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CityScreen(onNext: () -> Unit) {
+fun CityScreen(
+    viewModel: OnboardingViewModel = hiltViewModel(),
+    onNext: () -> Unit) {
+
     val cities = listOf("Новосибирск", "Москва", "Санкт-Петербург")
-    //var expanded
-    //var selectedCity TODO Реализовать эти две переменные во ViewModel
+
+    val expanded by viewModel.expanded.collectAsStateWithLifecycle()
+    val selectedCity by viewModel.selectedCity.collectAsStateWithLifecycle()
 
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(modifier = Modifier
@@ -45,21 +53,25 @@ fun CityScreen(onNext: () -> Unit) {
             contentAlignment = Alignment.Center
         ) {
             ExposedDropdownMenuBox(
-                expanded = false, //true заменить на expanded
-                onExpandedChange = {} // <- TODO Сюда вставить функцию для изменения состояния expended из ViewModel
+                expanded = expanded,
+                onExpandedChange = {
+                    viewModel.onExpandedChanged()
+                }
             ) {
                 TextField(
                     modifier = Modifier
-                        .menuAnchor()
+                        //.menuAnchor() вроде устаревшая какая та тема
                         .fillMaxWidth(),
-                    value = "Новосибирск", //TODO Поменять на selectedCity
+                    value = selectedCity,
                     onValueChange = {},
                     readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = false) }, //true заменить на expanded
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 )
-                ExposedDropdownMenu(expanded = false, onDismissRequest = {}) {
+                ExposedDropdownMenu(expanded = expanded, onDismissRequest = {}) {
                     cities.forEach { city ->
-                        DropdownMenuItem(text = { Text(city) }, onClick = { /* ... */ })
+                        DropdownMenuItem(text = { Text(city) }, onClick = {
+                            viewModel.onCitySelected(city = city)
+                        })
                     }
                 }
             }
@@ -73,7 +85,9 @@ fun CityScreen(onNext: () -> Unit) {
         ) {
             Button(modifier = Modifier
                 .height(60.dp)
-                .fillMaxWidth(0.9f), onClick = onNext) {
+                .fillMaxWidth(0.9f), onClick = {
+                    viewModel.onCityClicked()
+                    onNext}) {
                 Text("Continue", style = MaterialTheme.typography.headlineSmall)
             }
         }

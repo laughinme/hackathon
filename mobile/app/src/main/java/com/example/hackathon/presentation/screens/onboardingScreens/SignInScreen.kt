@@ -13,21 +13,27 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.PreviewTheme
-import com.example.hackathon.presentation.viewmodel.SignInViewModel
+import com.example.hackathon.presentation.viewmodel.OnboardingViewModel
 
 @Composable
 fun SignInScreen(
-    viewModel: SignInViewModel = hiltViewModel(),
+    viewModel: OnboardingViewModel= hiltViewModel(),
     onSignInSuccess: () -> Unit,
     onNavigateToSignUp: () -> Unit
 ) {
+
+    val email by viewModel.email.collectAsStateWithLifecycle()
+    val password by viewModel.password.collectAsStateWithLifecycle()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -38,15 +44,15 @@ fun SignInScreen(
         Text("Sign In", fontSize = 28.sp)
         Spacer(Modifier.height(40.dp))
         OutlinedTextField(
-            value = "", // TODO: Connect to ViewModel state
-            onValueChange = {},
+            value = email,
+            onValueChange = {viewModel.onEmailChanged(newEmail = it)},
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(16.dp))
         OutlinedTextField(
-            value = "", // TODO: Connect to ViewModel state
-            onValueChange = {},
+            value = password,
+            onValueChange = {viewModel.onPasswordChanged(newPassword = it)},
             label = { Text("Password") },
             modifier = Modifier.fillMaxWidth()
         )
