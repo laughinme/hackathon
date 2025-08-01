@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,16 +17,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.compose.PreviewTheme
 
 @Composable
-fun GenderPickerscreen() {
+fun GenderPickerScreen() {
     val genders = listOf("Male", "Female", "Other")
     //var selectedGender TODO реализовать эту переменную во ViewModel
-    Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.Center) {
+    Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(modifier = Modifier.weight(1f))
         Box(
             modifier = Modifier.weight(1f),
@@ -78,6 +76,6 @@ fun GenderPickerscreen() {
 @Composable
 fun GenderPickerPreview() {
     PreviewTheme {
-        GenderPickerscreen()
+        GenderPickerScreen()
     }
 }
