@@ -18,14 +18,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.commandiron.wheel_picker_compose.WheelDatePicker
 import com.example.compose.PreviewTheme
+import com.example.hackathon.presentation.viewmodel.OnboardingViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 
 // USES https://github.com/commandiron/WheelPickerCompose
 const val AGE_PICKER_TAG = "AgePickerScreen"
 
 @Composable
-fun AgePickerScreen(onNext: () -> Unit) {
+fun AgePickerScreen(
+    viewModel: OnboardingViewModel = hiltViewModel(),
+    onNext: () -> Unit) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.fillMaxWidth().weight(1f),
@@ -35,15 +40,19 @@ fun AgePickerScreen(onNext: () -> Unit) {
             }
             Box(modifier = Modifier.fillMaxWidth().weight(1f),
                 contentAlignment = Alignment.Center) {
-                WheelDatePicker { snappedDateTime ->
-                    Log.d(AGE_PICKER_TAG, "Выбранная дата рождения: $snappedDateTime")
+                WheelDatePicker { snappedDate ->
+                    viewModel.onPickedDate(date = snappedDate)
+                    Log.d(AGE_PICKER_TAG, "Выбранная дата рождения: $snappedDate")
                 }
             }
             Box(modifier = Modifier.fillMaxWidth().weight(1f).padding(bottom = 60.dp),
                 contentAlignment = Alignment.BottomCenter) {
                 Button(
                     modifier = Modifier.height(60.dp).fillMaxWidth(0.9f),
-                    onClick = onNext // <-- Подключил навигацию
+                    onClick = {
+                        viewModel.onAgePickerClicked()
+                        onNext
+                    } // <-- Подключил навигацию || Спасибо ❤️
                 ) {
                     Text("Continue",
                         style = MaterialTheme.typography.headlineSmall)
