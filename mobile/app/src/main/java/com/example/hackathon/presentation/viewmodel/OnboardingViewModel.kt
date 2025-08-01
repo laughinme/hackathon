@@ -117,8 +117,11 @@ class OnboardingViewModel @Inject constructor(
     }
 
     //=========================================
-    //          Всё для genresPicker
+    //           Всё для genresPicker
     //=========================================
+
+    private val _allGenres = MutableStateFlow<List<String>>(emptyList())
+    val allGenres = _allGenres.asStateFlow()
 
     private val _selectedGenres = MutableStateFlow<Set<String>>(emptySet())
     val selectedGenres = _selectedGenres.asStateFlow()

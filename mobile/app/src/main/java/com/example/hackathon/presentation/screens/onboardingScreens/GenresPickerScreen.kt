@@ -29,7 +29,7 @@ import com.example.hackathon.presentation.viewmodel.OnboardingViewModel
 fun GenresPickerScreen(
     viewModel: OnboardingViewModel = hiltViewModel(),
     onProfileComplete: () -> Unit) {
-    val allGenres = listOf("Рок", "Джаз", "Хип-хоп", "Классика", "Поп", "Электроника", "Регги")
+    val allGenres by viewModel.allGenres.collectAsStateWithLifecycle()
     val selectedGenres by viewModel.selectedGenres.collectAsStateWithLifecycle()
 
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
