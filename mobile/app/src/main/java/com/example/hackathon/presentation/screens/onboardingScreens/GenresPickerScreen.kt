@@ -50,7 +50,7 @@ fun GenresPickerScreen(
         Box(modifier = Modifier.fillMaxWidth().weight(1f).padding(bottom = 60.dp), contentAlignment = Alignment.BottomCenter){
             Button(modifier = Modifier.height(60.dp).fillMaxWidth(0.9f), onClick = {
                 viewModel.onGenrePickerClicked()
-                onProfileComplete}) {
+                onProfileComplete()}) {
                 Text("Continue", style = MaterialTheme.typography.headlineSmall)
             }
         }

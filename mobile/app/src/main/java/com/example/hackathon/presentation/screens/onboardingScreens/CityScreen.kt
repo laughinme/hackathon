@@ -32,7 +32,8 @@ import com.example.hackathon.presentation.viewmodel.OnboardingViewModel
 @Composable
 fun CityScreen(
     viewModel: OnboardingViewModel = hiltViewModel(),
-    onNext: () -> Unit) {
+    onNext: () -> Unit
+) {
 
     val cities = listOf("Новосибирск", "Москва", "Санкт-Петербург")
 
@@ -40,9 +41,11 @@ fun CityScreen(
     val selectedCity by viewModel.selectedCity.collectAsStateWithLifecycle()
 
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .weight(1f), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f), contentAlignment = Alignment.Center
+        ) {
             Text("Choose your city", fontSize = 25.sp)
         }
         Box(
@@ -83,11 +86,13 @@ fun CityScreen(
                 .padding(bottom = 60.dp),
             contentAlignment = Alignment.BottomCenter
         ) {
-            Button(modifier = Modifier
-                .height(60.dp)
-                .fillMaxWidth(0.9f), onClick = {
+            Button(
+                modifier = Modifier
+                    .height(60.dp)
+                    .fillMaxWidth(0.9f), onClick = {
                     viewModel.onCityClicked()
-                    onNext}) {
+                    onNext()
+                }) {
                 Text("Continue", style = MaterialTheme.typography.headlineSmall)
             }
         }

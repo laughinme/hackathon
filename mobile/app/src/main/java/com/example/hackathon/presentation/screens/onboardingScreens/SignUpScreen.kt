@@ -43,21 +43,23 @@ fun SignUpScreen(
         Spacer(Modifier.height(40.dp))
         OutlinedTextField(
             value = email,
-            onValueChange = {viewModel.onEmailChanged(newEmail = email)},
+            onValueChange = {viewModel.onEmailChanged(newEmail = it)},
             label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
         Spacer(Modifier.height(16.dp))
         OutlinedTextField(
             value = password,
-            onValueChange = {viewModel.onPasswordChanged(newPassword = password)},
+            onValueChange = {viewModel.onPasswordChanged(newPassword = it)},
             label = { Text("Password") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
         Spacer(Modifier.height(32.dp))
         Button(onClick = {
             viewModel.onSignUpClicked()
-            onSignUpSuccess
+            onSignUpSuccess()
                          }, modifier = Modifier.fillMaxWidth()) {
             Text("Sign Up")
         }

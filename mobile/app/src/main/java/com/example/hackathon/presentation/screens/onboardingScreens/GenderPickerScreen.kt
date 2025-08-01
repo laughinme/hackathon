@@ -20,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,15 +32,20 @@ import com.example.hackathon.presentation.viewmodel.OnboardingViewModel
 @Composable
 fun GenderPickerScreen(
     viewModel: OnboardingViewModel = hiltViewModel(),
-    onNext: () -> Unit) {
+    onNext: () -> Unit
+) {
     val genders = listOf("Male", "Female", "Other")
     val selectedGender by viewModel.selectedGender.collectAsStateWithLifecycle()
 
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier
+            .weight(1f)
+            .fillMaxWidth(), contentAlignment = Alignment.Center) {
             Text(text = "Choose your gender", fontSize = 30.sp)
         }
-        Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier
+            .weight(1f)
+            .fillMaxWidth(), contentAlignment = Alignment.Center) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 genders.forEach { gender ->
                     val isSelected = (gender == selectedGender)
@@ -57,18 +61,31 @@ fun GenderPickerScreen(
                         } else {
                             ButtonDefaults.outlinedButtonColors()
                         },
-                        modifier = Modifier.width(110.dp).height(55.dp).offset(x = (-1 * genders.indexOf(gender)).dp).zIndex(if (isSelected) 1f else 0f)
+                        modifier = Modifier
+                            .width(110.dp)
+                            .height(55.dp)
+                            .offset(x = (-1 * genders.indexOf(gender)).dp)
+                            .zIndex(if (isSelected) 1f else 0f)
                     ) {
                         Text(text = gender)
                     }
                 }
             }
         }
-        Box(modifier = Modifier.weight(1f).fillMaxWidth().padding(bottom = 60.dp), contentAlignment = Alignment.BottomCenter){
-            Button(modifier = Modifier.height(60.dp).fillMaxWidth(0.9f),
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(bottom = 60.dp),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Button(
+                modifier = Modifier
+                    .height(60.dp)
+                    .fillMaxWidth(0.9f),
                 onClick = {
-                viewModel.onGenderPickerClicked()
-                onNext
+                    viewModel.onGenderPickerClicked()
+                    onNext()
                 }) {
                 Text("Continue", style = MaterialTheme.typography.headlineSmall)
             }

@@ -22,7 +22,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.commandiron.wheel_picker_compose.WheelDatePicker
 import com.example.compose.PreviewTheme
 import com.example.hackathon.presentation.viewmodel.OnboardingViewModel
-import dagger.hilt.android.lifecycle.HiltViewModel
 
 // USES https://github.com/commandiron/WheelPickerCompose
 const val AGE_PICKER_TAG = "AgePickerScreen"
@@ -51,8 +50,8 @@ fun AgePickerScreen(
                     modifier = Modifier.height(60.dp).fillMaxWidth(0.9f),
                     onClick = {
                         viewModel.onAgePickerClicked()
-                        onNext
-                    } // <-- Подключил навигацию || Спасибо ❤️
+                        onNext()
+                    }
                 ) {
                     Text("Continue",
                         style = MaterialTheme.typography.headlineSmall)
