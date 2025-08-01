@@ -1,6 +1,18 @@
-import React, { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { BookOpen, BarChart3, ShieldCheck, Users, Clock, CheckCircle, XCircle, LayoutDashboard, Library } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+import LoginPage from './components/auth/LoginPage';
+import RegisterPage from './components/auth/RegisterPage';
+import Dashboard from './components/pages/Dashboard';
+import Moderation from './components/pages/Moderation';
+import Sidebar from './components/layout/Sidebar';
+import PrivateRoute from './components/layout/PrivateRoute';
+
+import apiProtected, { setAccessToken, getAccessToken } from './api/axios';
+
+export const AuthContext = createContext(null);
 
 const StyleInjector = () => {
   React.useEffect(() => {
@@ -62,7 +74,6 @@ const StyleInjector = () => {
         color: var(--md-sys-color-on-background);
         font-family: 'Inter', sans-serif;
       }
-      /* Custom scrollbar for a better look */
       ::-webkit-scrollbar {
         width: 8px;
       }
@@ -86,214 +97,57 @@ const StyleInjector = () => {
   return null;
 };
 
-const MOCK_STATS = {
-  totalBooks: 10247,
-  pendingModeration: 12,
-  totalUsers: 2384,
-  activeExchanges: 127,
-};
-
-const MOCK_CHART_DATA = [
-  { name: 'Пн', "Новые книги": 25 },
-  { name: 'Вт', "Новые книги": 30 },
-  { name: 'Ср', "Новые книги": 22 },
-  { name: 'Чт', "Новые книги": 45 },
-  { name: 'Пт', "Новые книги": 50 },
-  { name: 'Сб', "Новые книги": 38 },
-  { name: 'Вс', "Новые книги": 42 },
-];
-
-const MOCK_MODERATION_BOOKS = [
-  { id: 1, title: 'Хроники Нарнии', author: 'К. С. Льюис', user: 'user_jane', date: '2024-07-30' },
-  { id: 2, title: 'Алхимик', author: 'Пауло Коэльо', user: 'booklover22', date: '2024-07-30' },
-  { id: 3, title: 'Дюна', author: 'Фрэнк Герберт', user: 'sandworm_rider', date: '2024-07-29' },
-  { id: 4, title: 'Маленький принц', author: 'Антуан де Сент-Экзюпери', user: 'pilot_antoine', date: '2024-07-28' },
-];
-
-
-const StatCard = ({ icon, title, value, color }) => (
-  <div className="flex flex-col items-start p-4 rounded-xl flex-1" style={{ backgroundColor: 'var(--md-sys-color-surface-container)' }}>
-    <div className="p-3 mb-4 text-white rounded-lg" style={{ backgroundColor: color }}>
-      {icon}
-    </div>
-    <div>
-      <p className="text-sm font-medium" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>{title}</p>
-      <p className="text-2xl font-bold" style={{ color: 'var(--md-sys-color-on-surface)' }}>{value}</p>
-    </div>
-  </div>
-);
-
-const Sidebar = ({ activePage, setActivePage }) => {
-  const navItems = [
-    { id: 'dashboard', label: 'Панель управления', icon: <LayoutDashboard size={20} /> },
-    { id: 'moderation', label: 'Модерация книг', icon: <ShieldCheck size={20} /> },
-  ];
-
-  return (
-    <aside className="w-64 flex-shrink-0 p-4" style={{ backgroundColor: 'var(--md-sys-color-surface-container-low)' }}>
-      <div className="flex items-center mb-10">
-        <BookOpen size={32} style={{ color: 'var(--md-sys-color-primary)' }} className="mr-3" />
-        <h1 className="text-xl font-bold" style={{ color: 'var(--md-sys-color-on-surface)' }}>Admin Panel</h1>
-      </div>
-      <nav>
-        <ul>
-          {navItems.map(item => (
-            <li key={item.id}>
-              <button
-                onClick={() => setActivePage(item.id)}
-                className={`w-full flex items-center py-3 px-4 my-1 rounded-lg transition-colors duration-200 ${
-                  activePage === item.id 
-                    ? 'text-black font-semibold' 
-                    : 'hover:bg-opacity-50'
-                }`}
-                style={{
-                  backgroundColor: activePage === item.id ? 'var(--md-sys-color-primary)' : 'transparent',
-                  color: activePage === item.id ? 'var(--md-sys-color-on-primary)' : 'var(--md-sys-color-on-surface-variant)',
-                }}
-              >
-                <span className="mr-3">{item.icon}</span>
-                {item.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
-    </aside>
-  );
-};
-
-
-const Dashboard = () => (
-  <div className="flex flex-col h-full"> 
-    <h2 className="text-3xl font-bold mb-6" style={{ color: 'var(--md-sys-color-on-surface)' }}>Панель управления</h2>
-    
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <StatCard icon={<Library size={24} />} title="Всего книг" value={MOCK_STATS.totalBooks.toLocaleString('ru-RU')} color="var(--md-sys-color-primary-container)" />
-      <StatCard icon={<Clock size={24} />} title="На модерации" value={MOCK_STATS.pendingModeration} color="var(--md-sys-color-secondary-container)" />
-      <StatCard icon={<Users size={24} />} title="Всего пользователей" value={MOCK_STATS.totalUsers.toLocaleString('ru-RU')} color="var(--md-sys-color-tertiary-container)" />
-      <StatCard icon={<BarChart3 size={24} />} title="Активных обменов" value={MOCK_STATS.activeExchanges} color="var(--md-sys-color-error-container)" />
-    </div>
-
-    <div className="p-6 rounded-xl flex-grow" style={{ backgroundColor: 'var(--md-sys-color-surface-container)' }}>
-      <h3 className="text-xl font-semibold mb-4" style={{ color: 'var(--md-sys-color-on-surface)' }}>Динамика добавления книг</h3>
-      <div style={{ width: '100%', height: 300 }}>
-        <ResponsiveContainer>
-          <BarChart data={MOCK_CHART_DATA} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--md-sys-color-outline-variant)" />
-            <XAxis dataKey="name" tick={{ fill: 'var(--md-sys-color-on-surface-variant)' }} />
-            <YAxis tick={{ fill: 'var(--md-sys-color-on-surface-variant)' }} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: 'var(--md-sys-color-surface-container-high)',
-                borderColor: 'var(--md-sys-color-outline)',
-                color: 'var(--md-sys-color-on-surface)'
-              }}
-              cursor={{ fill: 'var(--md-sys-color-surface-variant)', fillOpacity: 0.5 }}
-            />
-            <Legend wrapperStyle={{ color: 'var(--md-sys-color-on-surface-variant)' }} />
-            <Bar dataKey="Новые книги" fill="var(--md-sys-color-primary)" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  </div>
-);
-
-const Moderation = () => {
-  const [books, setBooks] = useState(MOCK_MODERATION_BOOKS);
-
-  const handleAction = (id, action) => {
-    console.log(`${action} book with id: ${id}`);
-    setBooks(books.filter(book => book.id !== id));
-  };
-
-  return (
-    <div>
-      <h2 className="text-3xl font-bold mb-6" style={{ color: 'var(--md-sys-color-on-surface)' }}>Модерация книг</h2>
-      <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--md-sys-color-surface-container)' }}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead style={{ backgroundColor: 'var(--md-sys-color-surface-container-high)' }}>
-              <tr>
-                <th className="p-4 font-semibold" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Название</th>
-                <th className="p-4 font-semibold" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Автор</th>
-                <th className="p-4 font-semibold" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Пользователь</th>
-                <th className="p-4 font-semibold" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Дата добавления</th>
-                <th className="p-4 font-semibold text-right" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Действия</th>
-              </tr>
-            </thead>
-            <tbody>
-              {books.map(book => (
-                <tr key={book.id} className="border-t" style={{ borderColor: 'var(--md-sys-color-outline-variant)' }}>
-                  <td className="p-4">
-                    <p className="font-semibold" style={{ color: 'var(--md-sys-color-on-surface)' }}>{book.title}</p>
-                  </td>
-                  <td className="p-4">
-                    <p className="text-sm" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>{book.author}</p>
-                  </td>
-                  <td className="p-4" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>{book.user}</td>
-                  <td className="p-4" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>{book.date}</td>
-                  <td className="p-4 text-right">
-                    <div className="flex justify-end space-x-2">
-                      <button 
-                        onClick={() => handleAction(book.id, 'Approved')}
-                        className="flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
-                        style={{ backgroundColor: 'var(--md-sys-color-tertiary-container)', color: 'var(--md-sys-color-on-tertiary-container)' }}
-                      >
-                        <CheckCircle size={16} className="mr-1.5" />
-                        Одобрить
-                      </button>
-                      <button 
-                        onClick={() => handleAction(book.id, 'Rejected')}
-                        className="flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
-                        style={{ backgroundColor: 'var(--md-sys-color-error-container)', color: 'var(--md-sys-color-on-error-container)' }}
-                      >
-                         <XCircle size={16} className="mr-1.5" />
-                        Отклонить
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {books.length === 0 && (
-            <div className="text-center p-8" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
-              <ShieldCheck size={48} className="mx-auto mb-4" />
-              <p className="text-lg">Все книги проверены!</p>
-              <p>Новых книг на модерацию пока нет.</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-
 export default function App() {
-  const [activePage, setActivePage] = useState('dashboard');
+  const [token, setToken] = useState(getAccessToken() || null);
+  const navigate = useNavigate();
 
-  const renderPage = () => {
-    switch (activePage) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'moderation':
-        return <Moderation />;
-      default:
-        return <Dashboard />;
+  useEffect(() => {
+    if (token) {
+      setAccessToken(token);
+    } else {
+      setAccessToken(null);
     }
+  }, [token]);
+
+  const login = (newToken) => {
+    setToken(newToken);
+    setAccessToken(newToken);
+    navigate('/');
+  };
+
+  const logout = () => {
+    setToken(null);
+    setAccessToken(null);
+    // TODO: можно добавить запрос на /api/v1/auth/logout, если нужно
+    navigate('/login');
   };
 
   return (
-    <>
+    <AuthContext.Provider value={{ token, login, logout }}>
       <StyleInjector />
-      <div className="flex flex-row min-h-screen">
-        <Sidebar activePage={activePage} setActivePage={setActivePage} />
-        <main className="flex flex-col flex-1 p-8 overflow-auto">
-          {renderPage()}
-        </main>
-      </div>
-    </>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        
+        <Route element={<PrivateRoute />}>
+          <Route path="/" element={
+            <div className="flex flex-row min-h-screen">
+              <Sidebar />
+              <main className="flex flex-col flex-1 p-8 overflow-auto">
+                <Dashboard />
+              </main>
+            </div>
+          } />
+          <Route path="/moderation" element={
+            <div className="flex flex-row min-h-screen">
+              <Sidebar />
+              <main className="flex flex-col flex-1 p-8 overflow-auto">
+                <Moderation />
+              </main>
+            </div>
+          } />
+        </Route>
+      </Routes>
+    </AuthContext.Provider>
   );
 }
