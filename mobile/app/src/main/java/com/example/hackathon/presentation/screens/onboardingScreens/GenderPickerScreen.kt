@@ -1,5 +1,6 @@
 package com.example.hackathon.presentation.screens.onboardingScreens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,67 +25,44 @@ import androidx.compose.ui.unit.sp
 import com.example.compose.PreviewTheme
 
 @Composable
-fun GenderPickerScreen() {
+fun GenderPickerScreen(onNext: () -> Unit) {
     val genders = listOf("Male", "Female", "Other")
     //var selectedGender TODO реализовать эту переменную во ViewModel
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Text(text = "Choose your gender",
-                fontSize = 30.sp)
+            Text(text = "Choose your gender", fontSize = 30.sp)
         }
-        Box(
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
+        Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 genders.forEach { gender ->
-                    //val isSelected = gender == selectedGender
                     OutlinedButton(
                         onClick = {},//TODO <- тут вставить функцию из ViewModel для изменения selectedGender
-                        colors = ButtonDefaults.outlinedButtonColors(),
                         modifier = Modifier.width(110.dp).height(55.dp)
-                        //colors = if (isSelected) {
-                        //  ButtonDefaults.outlinedButtonColors(
-                        //                        containerColor = MaterialTheme.colorScheme.primary,
-                        //                        contentColor = MaterialTheme.colorScheme.onPrimary
-                        //                    )
-                        //} else {
-                        //  ButtonDefaults.outlinedButtonColors()
-                        //},
-                        //modifier = Modifier.offset(x = (-1 * genders.indexOf(gender)).dp, zIndex = if (isSelected) 1f else 0f)
-                        //TODO все модификаторы сверху раскомментировать после добавления ViewModel, а старые удалить
                     ) {
                         Text(text = gender)
                     }
                 }
             }
         }
-        Box(modifier = Modifier.weight(1f).fillMaxWidth().padding(bottom = 60.dp),
-            contentAlignment = Alignment.BottomCenter){
-            Button(modifier = Modifier.height(60.dp).fillMaxWidth(0.9f), onClick = {
-
-
-                //TODO  Миша сделай тут переход на CityScreen
-
-
-            }) {
-                Text("Continue",
-                    style = MaterialTheme.typography.headlineSmall)
+        Box(modifier = Modifier.weight(1f).fillMaxWidth().padding(bottom = 60.dp), contentAlignment = Alignment.BottomCenter){
+            Button(modifier = Modifier.height(60.dp).fillMaxWidth(0.9f), onClick = onNext) {
+                Text("Continue", style = MaterialTheme.typography.headlineSmall)
             }
         }
     }
 }
 
-
 @Preview(showBackground = true, name = "Light Theme")
 @Preview(
     showBackground = true,
-    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
     name = "Dark Theme"
 )
 @Composable
 fun GenderPickerPreview() {
     PreviewTheme {
-        GenderPickerScreen()
+        GenderPickerScreen(
+            onNext = {}
+        )
     }
 }

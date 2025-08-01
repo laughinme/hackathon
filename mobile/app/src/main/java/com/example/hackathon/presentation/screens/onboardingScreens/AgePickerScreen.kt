@@ -1,5 +1,6 @@
 package com.example.hackathon.presentation.screens.onboardingScreens
 
+import android.content.res.Configuration
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,34 +22,32 @@ import com.commandiron.wheel_picker_compose.WheelDatePicker
 import com.example.compose.PreviewTheme
 
 // USES https://github.com/commandiron/WheelPickerCompose
-val tag = "AgePickerScreen"
+const val AGE_PICKER_TAG = "AgePickerScreen"
 
 @Composable
-fun AgePickerScreen() {
-    Column(modifier = Modifier.fillMaxSize()) {
-        Box(modifier = Modifier.fillMaxWidth().weight(1f),
-            contentAlignment = Alignment.Center){
-            Text("Choose your age",
-                fontSize = 25.sp)
-        }
-        Box(modifier = Modifier.fillMaxWidth().weight(1f),
-            contentAlignment = Alignment.Center) {
-            WheelDatePicker { snappedDateTime ->
-                Log.d(tag, "Выбранная дата рождения: $snappedDateTime")
+fun AgePickerScreen(onNext: () -> Unit) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.fillMaxWidth().weight(1f),
+                contentAlignment = Alignment.Center){
+                Text("Choose your age",
+                    fontSize = 25.sp)
             }
-        }
-        Box(modifier = Modifier.fillMaxWidth().weight(1f).padding(bottom = 60.dp),
-            contentAlignment = Alignment.BottomCenter) {
-
-            Button(modifier = Modifier.height(60.dp).fillMaxWidth(0.9f), onClick = {
-
-
-                //TODO  Миша сделай тут переход на GenderPickerScreen
-
-
-            }) {
-                Text("Continue",
-                    style = MaterialTheme.typography.headlineSmall)
+            Box(modifier = Modifier.fillMaxWidth().weight(1f),
+                contentAlignment = Alignment.Center) {
+                WheelDatePicker { snappedDateTime ->
+                    Log.d(AGE_PICKER_TAG, "Выбранная дата рождения: $snappedDateTime")
+                }
+            }
+            Box(modifier = Modifier.fillMaxWidth().weight(1f).padding(bottom = 60.dp),
+                contentAlignment = Alignment.BottomCenter) {
+                Button(
+                    modifier = Modifier.height(60.dp).fillMaxWidth(0.9f),
+                    onClick = onNext // <-- Подключил навигацию
+                ) {
+                    Text("Continue",
+                        style = MaterialTheme.typography.headlineSmall)
+                }
             }
         }
     }
@@ -56,12 +56,14 @@ fun AgePickerScreen() {
 @Preview(showBackground = true, name = "Light Theme")
 @Preview(
     showBackground = true,
-    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
     name = "Dark Theme"
 )
 @Composable
 fun AgePickerPreview() {
     PreviewTheme {
-        AgePickerScreen()
+        AgePickerScreen(
+            onNext = {}
+        )
     }
 }
