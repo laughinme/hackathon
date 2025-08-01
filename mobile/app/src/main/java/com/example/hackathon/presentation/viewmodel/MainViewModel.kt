@@ -1,17 +1,22 @@
 package com.example.hackathon.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.hackathon.data.remote.network.TokenManager
+import com.example.hackathon.domain.model.Resource
+import com.example.hackathon.domain.usecase.LogoutUseCase
 import com.example.hackathon.presentation.navigation.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import javax.inject.Inject
-
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    // Здесь можно внедрить ваши репозитории для проверки статуса
-    // private val userRepository: UserRepository
+    private val tokenManager: TokenManager, // Для проверки статуса входа
+    private val logoutUseCase: LogoutUseCase // Для выполнения выхода
 ) : ViewModel() {
 
     private val _startDestination = MutableStateFlow(Routes.AUTH_GRAPH)
@@ -22,24 +27,38 @@ class MainViewModel @Inject constructor(
     }
 
     private fun checkUserStatus() {
-        // В реальном приложении эти вызовы будут асинхронными
-        val userIsLoggedIn = checkUserLoginStatus()
-        val profileIsComplete = checkProfileStatus()
+        viewModelScope.launch {
+            // Проверяем наличие токена. first() возьмет первое значение из Flow
+            val accessToken = tokenManager.getAccessToken().first()
+            val userIsLoggedIn = accessToken != null
 
-        _startDestination.value = when {
-            userIsLoggedIn && profileIsComplete -> Routes.MAIN_GRAPH
-            userIsLoggedIn && !profileIsComplete -> Routes.PROFILE_CREATION_GRAPH
-            else -> Routes.AUTH_GRAPH
+            // Логика для проверки профиля (оставим пока как есть)
+            val profileIsComplete = checkProfileStatus()
+
+            _startDestination.value = when {
+                userIsLoggedIn && profileIsComplete -> Routes.MAIN_GRAPH
+                userIsLoggedIn && !profileIsComplete -> Routes.PROFILE_CREATION_GRAPH
+                else -> Routes.AUTH_GRAPH
+            }
         }
     }
 
-    private fun checkUserLoginStatus(): Boolean {
-        // return userRepository.isLoggedIn()
-        return false // Для теста
+    fun onLogoutClicked() {
+        viewModelScope.launch {
+            logoutUseCase().collect { result ->
+                // Здесь ты можешь обработать результат выхода,
+                // например, показать Toast или обновить UI
+                if (result is Resource.Success) {
+                    // После успешного выхода, скорее всего, нужно будет
+                    // снова направить пользователя на экран входа
+                    _startDestination.value = Routes.AUTH_GRAPH
+                }
+            }
+        }
     }
 
     private fun checkProfileStatus(): Boolean {
-        // return userRepository.hasCompletedProfile()
+        // Здесь будет твоя логика проверки, завершен ли онбординг
         return false // Для теста
     }
 }

@@ -2,16 +2,26 @@ package com.example.hackathon.presentation.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.hackathon.data.remote.dto.UserLoginRequest
+import com.example.hackathon.data.remote.dto.UserRegisterRequest
+import com.example.hackathon.domain.model.Resource
+import com.example.hackathon.domain.model.TokenPair
+import com.example.hackathon.domain.usecase.LoginUseCase
+import com.example.hackathon.domain.usecase.RegisterUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
 const val ONBOARDING_VIEWMODEL_TAG = "OnboardingViewModel"
+
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
-    //Тут UseCase
+    private val loginUseCase: LoginUseCase,
+    private val registerUseCase: RegisterUseCase
 ) : ViewModel() {
 
     //=========================================
@@ -23,6 +33,9 @@ class OnboardingViewModel @Inject constructor(
     private val _password = MutableStateFlow("")
     val password = _password.asStateFlow()
 
+    private val _authState = MutableStateFlow<Resource<TokenPair>?>(null)
+    val authState = _authState.asStateFlow()
+
     fun onEmailChanged(newEmail: String) {
         _email.value = newEmail
     }
@@ -32,14 +45,25 @@ class OnboardingViewModel @Inject constructor(
     }
 
     fun onSignInClicked() {
-        // viewModelScope.launch { authRepository.signIn(...) }
-        Log.d(ONBOARDING_VIEWMODEL_TAG, "Sign In button clicked in ViewModel!")
+        viewModelScope.launch {
+            loginUseCase(UserLoginRequest(email.value, password.value))
+                .collect { result ->
+                    _authState.value = result
+                }
+        }
     }
 
     fun onSignUpClicked() {
-        // viewModelScope.launch { authRepository.signIn(...) }
-        Log.d(ONBOARDING_VIEWMODEL_TAG, "Sign In button clicked in ViewModel!")
+        viewModelScope.launch {
+            // Предполагаем, что у тебя есть поле для username
+            val username = "some_username" // Возьми из соответствующего StateFlow
+            registerUseCase(UserRegisterRequest(email.value, password.value, username))
+                .collect { result ->
+                    _authState.value = result
+                }
+        }
     }
+
 
     //=========================================
     //           Всё для AgePicker
@@ -103,7 +127,7 @@ class OnboardingViewModel @Inject constructor(
         val currentSelected = selectedGenres.value.toMutableSet()
         if (genre in currentSelected) {
             currentSelected.remove(genre)
-        }else {
+        } else {
             currentSelected.add(genre)
         }
         _selectedGenres.value = currentSelected
@@ -112,8 +136,4 @@ class OnboardingViewModel @Inject constructor(
     fun onGenrePickerClicked() {
         Log.d(ONBOARDING_VIEWMODEL_TAG, "Выбранные жанры: $_selectedGenres")
     }
-
-
-
-
 }
