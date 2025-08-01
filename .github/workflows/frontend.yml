@@ -1,0 +1,29 @@
+name: Netlify Production Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-to-production:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the site
+        run: npm run build
+
+      - name: Deploy to Netlify (Production)
+        uses: jsmrcaga/action-netlify-deploy@v2.4.0
+        with:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_DEPLOY_TO_PROD: true
+          build_directory: dist
+          deploy_message: "Production deploy from commit ${{ github.sha }}"
