@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { apiPublic } from '../../api/axios';
 import { AuthContext } from '../../App';
 import { BookOpen } from 'lucide-react';
@@ -9,6 +9,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { login } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -85,6 +86,36 @@ const LoginPage = () => {
             Войти
           </button>
         </form>
+
+        <div className="flex items-center my-4">
+          <div className="flex-grow border-t" style={{ borderColor: 'var(--md-sys-color-outline-variant)' }}></div>
+          <span className="flex-shrink mx-4 text-sm" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>или</span>
+          <div className="flex-grow border-t" style={{ borderColor: 'var(--md-sys-color-outline-variant)' }}></div>
+        </div>
+
+        <div className="space-y-3">
+          <Link
+            to="/home"
+            className="w-full block text-center py-3 px-4 rounded-lg font-semibold transition-colors duration-200 hover:bg-[var(--md-sys-color-surface-container-high)]"
+            style={{
+              border: '1px solid var(--md-sys-color-outline)',
+              color: 'var(--md-sys-color-primary)',
+            }}
+          >
+            Перейти на главную (Пользователь)
+          </Link>
+          <Link
+            to="/"
+            className="w-full block text-center py-3 px-4 rounded-lg font-semibold transition-colors duration-200 hover:bg-[var(--md-sys-color-surface-container-high)]"
+            style={{
+              border: '1px solid var(--md-sys-color-outline)',
+              color: 'var(--md-sys-color-primary)',
+            }}
+          >
+            Перейти в админ-панель
+          </Link>
+        </div>
+        
         <p className="mt-6 text-center text-sm" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
           Ещё нет аккаунта?{' '}
           <Link to="/register" className="font-semibold" style={{ color: 'var(--md-sys-color-primary)' }}>

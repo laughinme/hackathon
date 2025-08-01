@@ -12,6 +12,7 @@
     "tailwind:watch": "npx tailwindcss -i ./src/input.css -o ./dist/output.css --watch"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.1.11",
     "axios": "^1.11.0",
     "init": "^0.1.2",
     "lucide-react": "^0.535.0",

@@ -1,16 +1,15 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { BookOpen, BarChart3, ShieldCheck, Users, Clock, CheckCircle, XCircle, LayoutDashboard, Library } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
 import LoginPage from './components/auth/LoginPage';
 import RegisterPage from './components/auth/RegisterPage';
 import Dashboard from './components/pages/Dashboard';
 import Moderation from './components/pages/Moderation';
 import Sidebar from './components/layout/Sidebar';
-import PrivateRoute from './components/layout/PrivateRoute';
+import UserHeader from './components/layout/UserHeader';
+import HomePage from './components/pages/HomePage';
+import UserProfilePage from './components/pages/UserProfilePage';
 
-import apiProtected, { setAccessToken, getAccessToken } from './api/axios';
+import apiProtected, { apiPublic, setAccessToken, getAccessToken } from './api/axios';
 
 export const AuthContext = createContext(null);
 
@@ -99,15 +98,36 @@ const StyleInjector = () => {
 
 export default function App() {
   const [token, setToken] = useState(getAccessToken() || null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    if (token) {
-      setAccessToken(token);
-    } else {
-      setAccessToken(null);
-    }
-  }, [token]);
+    const checkAuthStatus = async () => {
+      if (getAccessToken()) {
+        setToken(getAccessToken());
+        setIsAuthLoading(false);
+        return;
+      }
+       
+      try {
+        const response = await apiPublic.post('/auth/refresh');
+        const newAccessToken = response.data.access_token;
+        setToken(newAccessToken);
+        setAccessToken(newAccessToken);
+        if (location.pathname === '/login' || location.pathname === '/register') {
+            navigate('/');
+        }
+      } catch (error) {
+        setToken(null);
+        setAccessToken(null);
+      } finally {
+        setIsAuthLoading(false);
+      }
+    };
+
+    checkAuthStatus();
+  }, [location.pathname]);
 
   const login = (newToken) => {
     setToken(newToken);
@@ -116,11 +136,20 @@ export default function App() {
   };
 
   const logout = () => {
-    setToken(null);
-    setAccessToken(null);
-    // TODO: можно добавить запрос на /api/v1/auth/logout, если нужно
-    navigate('/login');
+    apiProtected.post('/auth/logout').finally(() => {
+      setToken(null);
+      setAccessToken(null);
+      navigate('/login');
+    });
   };
+
+  if (isAuthLoading) {
+    return (
+        <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: 'var(--md-sys-color-background)' }}>
+          <p style={{ color: 'var(--md-sys-color-on-background)' }}>Загрузка...</p>
+        </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ token, login, logout }}>
@@ -129,24 +158,40 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         
-        <Route element={<PrivateRoute />}>
-          <Route path="/" element={
-            <div className="flex flex-row min-h-screen">
-              <Sidebar />
-              <main className="flex flex-col flex-1 p-8 overflow-auto">
-                <Dashboard />
-              </main>
-            </div>
-          } />
-          <Route path="/moderation" element={
-            <div className="flex flex-row min-h-screen">
-              <Sidebar />
-              <main className="flex flex-col flex-1 p-8 overflow-auto">
-                <Moderation />
-              </main>
-            </div>
-          } />
-        </Route>
+        <Route path="/" element={
+          <div className="flex flex-row min-h-screen">
+            <Sidebar />
+            <main className="flex flex-col flex-1 p-8 overflow-auto">
+              <Dashboard />
+            </main>
+          </div>
+        } />
+        <Route path="/moderation" element={
+          <div className="flex flex-row min-h-screen">
+            <Sidebar />
+            <main className="flex flex-col flex-1 p-8 overflow-auto">
+              <Moderation />
+            </main>
+          </div>
+        } />
+
+        <Route path="/home" element={
+          <div className="flex flex-col min-h-screen">
+            <UserHeader />
+            <main className="flex-1 overflow-auto" style={{ backgroundColor: 'var(--md-sys-color-background)' }}>
+              <HomePage />
+            </main>
+          </div>
+        } />
+
+        <Route path="/profile" element={
+          <div className="flex flex-col min-h-screen">
+            <UserHeader />
+            <main className="flex-1 overflow-auto">
+              <UserProfilePage />
+            </main>
+          </div>
+        } />
       </Routes>
     </AuthContext.Provider>
   );
