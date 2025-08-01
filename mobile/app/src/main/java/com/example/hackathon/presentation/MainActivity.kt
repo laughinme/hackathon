@@ -3,34 +3,26 @@ package com.example.hackathon.presentation
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.example.compose.AppTheme
 import com.example.hackathon.presentation.navigation.AppNavigation
-import com.example.hackathon.presentation.navigation.Routes
+import com.example.hackathon.presentation.viewmodel.MainViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private val viewModel: MainViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        // --- ЛОГИКА ОПРЕДЕЛЕНИЯ СТАРТОВОГО ЭКРАНА ---
-        // В реальном приложении эта логика будет в ViewModel.
-        val userIsLoggedIn = checkUserLoginStatus()
-        val profileIsComplete = checkProfileStatus() // <-- Новая проверка
-
-        val startDestination = when {
-            // Если пользователь вошел и профиль заполнен -> главный экран
-            userIsLoggedIn && profileIsComplete -> Routes.MAIN_GRAPH
-            // Если вошел, но профиль не заполнен -> экран создания профиля
-            userIsLoggedIn && !profileIsComplete -> Routes.PROFILE_CREATION_GRAPH
-            // Если не вошел -> экран аутентификации
-            else -> Routes.AUTH_GRAPH
-        }
-        // ------------------------------------------------
 
         setContent {
             AppTheme {
@@ -39,6 +31,8 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
+                    val startDestination by viewModel.startDestination.collectAsState()
+
                     AppNavigation(
                         navController = navController,
                         startDestination = startDestination
@@ -46,23 +40,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    /**
-     * Функция-заглушка для проверки статуса пользователя.
-     * Замените ее на свою реальную логику.
-     */
-    private fun checkUserLoginStatus(): Boolean {
-        // Например: return dataStore.getToken().isNotBlank()
-        return false
-    }
-
-    /**
-     * Функция-заглушка для проверки, заполнен ли профиль.
-     * Замените ее на свою реальную логику.
-     */
-    private fun checkProfileStatus(): Boolean {
-        // Например: return userRepository.hasCompletedProfile()
-        return false
     }
 }

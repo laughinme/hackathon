@@ -2,18 +2,14 @@ package com.example.hackathon.presentation.screens.onboardingScreens
 
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -22,12 +18,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.compose.PreviewTheme
+import com.example.hackathon.presentation.viewmodel.SignInViewModel
 
 @Composable
-fun SignInScreen(onSignInSuccess: () -> Unit, onNavigateToSignUp: () -> Unit) {
+fun SignInScreen(
+    viewModel: SignInViewModel = hiltViewModel(),
+    onSignInSuccess: () -> Unit,
+    onNavigateToSignUp: () -> Unit
+) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 32.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -47,7 +51,10 @@ fun SignInScreen(onSignInSuccess: () -> Unit, onNavigateToSignUp: () -> Unit) {
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(32.dp))
-        Button(onClick = onSignInSuccess, modifier = Modifier.fillMaxWidth()) {
+        Button(onClick = {
+            viewModel.onSignInClicked()
+            onSignInSuccess()
+        }, modifier = Modifier.fillMaxWidth()) {
             Text("Sign In")
         }
         TextButton(onClick = onNavigateToSignUp) {
