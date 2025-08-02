@@ -6,7 +6,7 @@ package com.example.hackathon.presentation.navigation
 object Routes {
     // --- ГРАФЫ НАВИГАЦИИ ---
     const val AUTH_GRAPH = "auth_graph"
-    const val PROFILE_CREATION_GRAPH = "profile_creation_graph" // <-- Новый граф
+    const val PROFILE_CREATION_GRAPH = "profile_creation_graph"
     const val MAIN_GRAPH = "main_graph"
 
 
@@ -23,5 +23,12 @@ object Routes {
     const val GENRE_PICKER = "genre_picker"
 
     // --- ЭКРАНЫ ОСНОВНОГО ГРАФА (MAIN_GRAPH) ---
-    const val HOME = "home"
+    // Маршруты для вкладок Bottom Navigation Bar
+    const val HOME_TAB = "home_tab"
+    const val FRIENDS_TAB = "friends_tab"
+    const val CHAT_TAB = "chat_tab"
+    const val PROFILE_TAB = "profile_tab"
+
+    // Маршрут для экрана добавления книги
+    const val ADD_BOOK = "add_book"
 }

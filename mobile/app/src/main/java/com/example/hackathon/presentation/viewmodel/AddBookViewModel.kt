@@ -90,7 +90,7 @@ class AddBookViewModel @Inject constructor(
             description = _state.value.description.takeIf { it.isNotBlank() },
             extraTerms = null,
             authorId = 1, // TODO: Заменить на реальный ID автора
-            genreId = _state.value.selectedGenre?.id ?: 0, // TODO: Обработать ошибку, если не выбран
+            genreId = _state.value.selectedGenre?.id ?: 1, // TODO: Обработать ошибку, если не выбран
             language = "ru",
             pages = _state.value.pages.toIntOrNull(),
             condition = _state.value.selectedCondition ?: BookCondition.NORMAL,

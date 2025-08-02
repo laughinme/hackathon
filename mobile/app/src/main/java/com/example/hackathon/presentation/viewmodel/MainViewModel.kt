@@ -59,6 +59,6 @@ class MainViewModel @Inject constructor(
 
     private fun checkProfileStatus(): Boolean {
         // Здесь будет твоя логика проверки, завершен ли онбординг
-        return false // Для теста
+        return true // Для теста
     }
 }
