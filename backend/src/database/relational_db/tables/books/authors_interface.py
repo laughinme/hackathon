@@ -8,6 +8,14 @@ class AuthorsInterface:
     def __init__(self, session: AsyncSession):
         self.session = session
         
+    async def by_id(self, id: int) -> Author | None:
+        author = await self.session.scalar(
+            select(Author)
+            .where(Author.id == id)
+        )
+        
+        return author
+        
     async def list_all(self) -> list[Author]:
         authors = await self.session.scalars(
             select(Author)

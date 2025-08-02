@@ -8,6 +8,14 @@ class GenresInterface:
     def __init__(self, session: AsyncSession):
         self.session = session
         
+    async def by_id(self, id: int) -> Genre | None:
+        genre = await self.session.scalar(
+            select(Genre)
+            .where(Genre.id == id)
+        )
+        
+        return genre
+        
     async def list_all(self) -> list[Genre]:
         genres = await self.session.scalars(
             select(Genre)
