@@ -23,11 +23,11 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.PreviewTheme
-import com.example.hackathon.presentation.viewmodel.OnboardingViewModel
+import com.example.hackathon.presentation.viewmodel.onboardingViewModel.GenresPickerViewModel
 
 @Composable
 fun GenresPickerScreen(
-    viewModel: OnboardingViewModel = hiltViewModel(),
+    viewModel: GenresPickerViewModel = hiltViewModel(),
     onProfileComplete: () -> Unit) {
     val allGenres by viewModel.allGenres.collectAsStateWithLifecycle()
     val selectedGenres by viewModel.selectedGenres.collectAsStateWithLifecycle()

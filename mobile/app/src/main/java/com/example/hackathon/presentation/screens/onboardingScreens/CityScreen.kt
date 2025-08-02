@@ -26,12 +26,12 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.PreviewTheme
-import com.example.hackathon.presentation.viewmodel.OnboardingViewModel
+import com.example.hackathon.presentation.viewmodel.onboardingViewModel.CityPickerViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CityScreen(
-    viewModel: OnboardingViewModel = hiltViewModel(),
+    viewModel: CityPickerViewModel = hiltViewModel(),
     onNext: () -> Unit
 ) {
 

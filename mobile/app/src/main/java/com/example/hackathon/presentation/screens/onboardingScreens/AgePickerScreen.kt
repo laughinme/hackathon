@@ -21,14 +21,14 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.commandiron.wheel_picker_compose.WheelDatePicker
 import com.example.compose.PreviewTheme
-import com.example.hackathon.presentation.viewmodel.OnboardingViewModel
+import com.example.hackathon.presentation.viewmodel.onboardingViewModel.AgePickerViewModel
 
 // USES https://github.com/commandiron/WheelPickerCompose
 const val AGE_PICKER_TAG = "AgePickerScreen"
 
 @Composable
 fun AgePickerScreen(
-    viewModel: OnboardingViewModel = hiltViewModel(),
+    viewModel: AgePickerViewModel = hiltViewModel(),
     onNext: () -> Unit) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
