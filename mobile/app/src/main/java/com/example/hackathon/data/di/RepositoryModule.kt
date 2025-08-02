@@ -1,8 +1,10 @@
 package com.example.hackathon.data.di
 
 import com.example.hackathon.data.repository.impl.AuthRepositoryImpl
+import com.example.hackathon.data.repository.impl.BookRepositoryImpl
 import com.example.hackathon.data.repository.impl.ProfileRepositoryImpl
 import com.example.hackathon.domain.repository.AuthRepository
+import com.example.hackathon.domain.repository.BookRepository
 import com.example.hackathon.domain.repository.ProfileRepository
 import dagger.Binds
 import dagger.Module
@@ -24,4 +26,10 @@ abstract class RepositoryModule {
     abstract fun bindProfileRepository(
         profileRepositoryImpl: ProfileRepositoryImpl
     ): ProfileRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindBookRepository(
+        bookRepositoryImpl: BookRepositoryImpl
+    ): BookRepository
 }
