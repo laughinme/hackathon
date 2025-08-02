@@ -29,12 +29,3 @@ class ExchangeLocation(TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     
     city: Mapped['City'] = relationship(lazy='selectin') # type: ignore
-    
-    
-    # @classmethod
-    # async def nearest_point(cls, session: AsyncSession, lat, lon) -> "ExchangeLocation | None":
-    #     return await session.scalar(
-    #         select(cls)
-    #         .order_by(dist_expression(cls, lat, lon))
-    #         .limit(1)
-    #     )

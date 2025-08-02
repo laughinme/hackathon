@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from core.security import auth_user
 
 
 def get_specific_book_router() -> APIRouter:
