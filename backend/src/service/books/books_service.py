@@ -12,6 +12,7 @@ from database.relational_db import (
     GenresInterface,
     User,
     UoW,
+    AuthorsInterface
 )
 from domain.books import BookCreate
 
@@ -22,15 +23,21 @@ class BookService:
         self,
         uow: UoW,
         genre_repo: GenresInterface,
-        books_repo: BooksInterface
+        books_repo: BooksInterface,
+        authors_repo: AuthorsInterface
     ):
         self.genre_repo = genre_repo
         self.books_repo = books_repo
         self.uow = uow
+        self.authors_repo = authors_repo
         
     async def list_genres(self):
         genres = await self.genre_repo.list_all()
         return genres
+    
+    async def list_authors(self):
+        authors = await self.authors_repo.list_all()
+        return authors
     
     async def get_book(self, book_id: UUID) -> Book | None:
         return await self.books_repo.by_id(book_id)
