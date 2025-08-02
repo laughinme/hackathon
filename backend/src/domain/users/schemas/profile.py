@@ -1,5 +1,5 @@
 from typing import Annotated
-from pydantic import BaseModel, Field, EmailStr, confloat, model_validator, HttpUrl, field_validator
+from pydantic import BaseModel, Field, EmailStr, confloat, model_validator, HttpUrl, field_validator, constr
 from datetime import date
 from uuid import UUID
 
@@ -19,6 +19,7 @@ class UserModel(BaseModel):
     birth_date: date | None = Field(None)
     age: int | None = Field(None)
     gender: Gender | None = Field(None)
+    language: Annotated[str, constr(min_length=2, max_length=2)] | None = Field(None)
     
     favorite_genres: list[GenreModel] = Field(default_factory=list)
     
@@ -37,6 +38,7 @@ class UserPatch(BaseModel):
     bio: str | None = Field(None)
     birth_date: date | None = Field(None)
     gender: Gender | None = Field(None)
+    language: Annotated[str, constr(min_length=2, max_length=2)] | None = Field(None)
     
     city_id: int | None = Field(None)
     

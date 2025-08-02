@@ -14,7 +14,7 @@ from database.relational_db import (
     UoW,
     AuthorsInterface,
     Author,
-    Genre
+    Genre,
 )
 from domain.books import BookCreate
 
@@ -26,7 +26,7 @@ class BookService:
         uow: UoW,
         genre_repo: GenresInterface,
         books_repo: BooksInterface,
-        authors_repo: AuthorsInterface
+        authors_repo: AuthorsInterface,
     ):
         self.genre_repo = genre_repo
         self.books_repo = books_repo
@@ -59,7 +59,6 @@ class BookService:
         new_book = await self.books_repo.by_id(book.id)
         return new_book
         
-
     async def add_photos(
         self,
         book_id: UUID,
@@ -99,3 +98,11 @@ class BookService:
 
         book.photo_urls.extend(urls)
         return book
+
+    async def list_books(self, user: User, filter: bool = False):
+        if filter:
+            books = await self.books_repo.recommended_books(user)
+        else:
+            books = await self.books_repo.list_books()
+            
+        return books
