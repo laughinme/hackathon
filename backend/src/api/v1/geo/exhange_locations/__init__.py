@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
 
 def get_exchange_locations_router() -> APIRouter:
