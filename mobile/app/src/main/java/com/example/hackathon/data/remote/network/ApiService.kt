@@ -1,19 +1,26 @@
 package com.example.hackathon.data.remote.network
 
 
+import com.example.hackathon.data.remote.dto.BookCreateRequest
+import com.example.hackathon.data.remote.dto.BookModelDto
+import com.example.hackathon.data.remote.dto.GenreModelDto
 import com.example.hackathon.data.remote.dto.GenresPatchRequest
 import com.example.hackathon.data.remote.dto.TokenPairDto
 import com.example.hackathon.data.remote.dto.UserLoginRequest
 import com.example.hackathon.data.remote.dto.UserModelDto
 import com.example.hackathon.data.remote.dto.UserPatchRequest
 import com.example.hackathon.data.remote.dto.UserRegisterRequest
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Part
+import retrofit2.http.Path
 
 interface ApiService {
 
@@ -74,6 +81,36 @@ interface ApiService {
      */
     @PUT("/api/v1/users/me/genres")
     suspend fun updateGenres(@Body request: GenresPatchRequest): Response<UserModelDto>
+
+    /**
+     * Создание новой книги.
+     * Требуется токен доступа.
+     * @param request Тело запроса с данными о книге.
+     * @return Модель созданной книги.
+     */
+    @POST("/api/v1/books/create")
+    suspend fun createBook(@Body request: BookCreateRequest): Response<BookModelDto>
+
+    /**
+     * Загрузка фотографий для книги.
+     * Требуется токен доступа.
+     * @param bookId ID книги, для которой загружаются фото.
+     * @param files Список файлов (фотографий).
+     * @return Модель книги с обновленными URL фотографий.
+     */
+    @Multipart
+    @PUT("/api/v1/books/{book_id}/photos")
+    suspend fun uploadBookPhotos(
+        @Path("book_id") bookId: String,
+        @Part files: List<MultipartBody.Part>
+    ): Response<BookModelDto>
+
+    /**
+     * Получение списка всех доступных жанров.
+     * @return Список моделей жанров.
+     */
+    @GET("/api/v1/books/genres/")
+    suspend fun getGenres(): Response<List<GenreModelDto>>
 }
 
 /**
