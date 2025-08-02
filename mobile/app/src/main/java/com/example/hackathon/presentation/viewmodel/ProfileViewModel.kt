@@ -29,6 +29,9 @@ class ProfileViewModel @Inject constructor(
     private val _profileState = MutableStateFlow<Resource<UserProfile>>(Resource.Loading())
     val profileState = _profileState.asStateFlow()
 
+    private val _onboardingSaveComplete = MutableStateFlow<Boolean>(false)
+    val onboardingSaveComplete = _onboardingSaveComplete.asStateFlow()
+
     // --- СОСТОЯНИЯ ДЛЯ ПОЛЕЙ ---
     private val _username = MutableStateFlow("")
     val username = _username.asStateFlow()
@@ -95,32 +98,41 @@ class ProfileViewModel @Inject constructor(
      * Метод для сохранения всех данных в конце онбординга.
      */
     fun saveOnboardingProfile() {
-        Log.d(PROFILE_VIEWMODEL_TAG, "Attempting to save profile with data: " +
-                "username=${_username.value}, " +
-                "bio=${_bio.value}, " +
-                "birthDate=${_birthDate.value}, " +
-                "gender=${_gender.value}, " +
-                "city=${_city.value}, " +
-                "genres=${_selectedGenres.value}")
+        // ... твой лог
         viewModelScope.launch {
+            _profileState.value = Resource.Loading() // Показываем индикатор загрузки на кнопке/экране
+
             val birthDateString = _birthDate.value?.format(DateTimeFormatter.ISO_LOCAL_DATE)
             val profileRequest = UserPatchRequest(
-                username = _username.value.ifEmpty { null },
-                bio = _bio.value.ifEmpty { null },
-                birthDate = birthDateString,
-                gender = _gender.value.lowercase().ifEmpty { null },
-                cityId = if (_city.value.isNotEmpty()) 1 else null
+                // ... твои данные
             )
-            updateProfileUseCase(profileRequest).onEach { profileResult ->
-                if (profileResult is Resource.Success) {
-                    val genreIds = listOf(1, 2, 3)
-                    updateGenresUseCase(genreIds).onEach { genreResult ->
-                        _profileState.value = genreResult
-                    }.launchIn(viewModelScope)
-                } else {
-                    _profileState.value = profileResult
+
+            // Сначала обновляем профиль
+            updateProfileUseCase(profileRequest).collect { profileResult ->
+                when (profileResult) {
+                    is Resource.Success -> {
+                        // Если профиль обновился, обновляем жанры
+                        val genreIds = listOf(1, 2, 3) // <-- Тут пока заглушка, нужно будет сделать маппинг
+                        updateGenresUseCase(genreIds).collect { genreResult ->
+                            if (genreResult is Resource.Success) {
+                                // ВСЁ ПРОШЛО УСПЕШНО!
+                                _profileState.value = genreResult // Финальное успешное состояние
+                                _onboardingSaveComplete.value = true // <-- СИГНАЛ К НАВИГАЦИИ!
+                            } else {
+                                // Ошибка при обновлении жанров
+                                _profileState.value = genreResult
+                            }
+                        }
+                    }
+                    is Resource.Error -> {
+                        // Ошибка при обновлении профиля
+                        _profileState.value = profileResult
+                    }
+                    is Resource.Loading -> {
+                        // Можно проигнорировать, т.к. мы уже в состоянии загрузки
+                    }
                 }
-            }.launchIn(viewModelScope)
+            }
         }
     }
 }

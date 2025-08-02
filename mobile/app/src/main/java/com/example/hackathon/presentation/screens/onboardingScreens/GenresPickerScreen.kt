@@ -36,10 +36,11 @@ fun GenresPickerScreen(
     val allGenres by viewModel.allGenres.collectAsStateWithLifecycle()
     val selectedGenres by viewModel.selectedGenres.collectAsStateWithLifecycle()
     val profileState by viewModel.profileState.collectAsStateWithLifecycle()
+    val onboardingSaveComplete by viewModel.onboardingSaveComplete.collectAsStateWithLifecycle()
 
     // После успешного сохранения вызываем onProfileComplete
-    LaunchedEffect(key1 = profileState) {
-        if (profileState is Resource.Success) {
+    LaunchedEffect(key1 = onboardingSaveComplete) {
+        if (onboardingSaveComplete) {
             onProfileComplete()
         }
     }
