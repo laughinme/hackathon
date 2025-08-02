@@ -26,6 +26,7 @@ class User(TimestampMixin, Base):
     bio: Mapped[str | None] = mapped_column(String, nullable=True)
     birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     gender: Mapped[Gender | None] = mapped_column(ENUM(Gender), nullable=True)
+    language: Mapped[str | None] = mapped_column(String(2), nullable=True)
     
     # Geography
     city_id: Mapped[int | None] = mapped_column(
@@ -39,13 +40,6 @@ class User(TimestampMixin, Base):
     is_onboarded: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     banned: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     
-    city: Mapped['City'] = relationship(lazy='selectin') # type: ignore
-    favorite_genres: Mapped[list['Genre']] = relationship( # type: ignore
-        lazy='selectin',
-        secondary='user_favorite_genres'
-    )
-    books: Mapped[list['Book']] = relationship(lazy='selectin') # type: ignore
-    
     @property
     def age(self) -> int | None:
         if not self.birth_date:
@@ -55,3 +49,10 @@ class User(TimestampMixin, Base):
             today.year - self.birth_date.year
             - ((today.month, today.day) < (self.birth_date.month, self.birth_date.day))
         )
+    
+    city: Mapped['City'] = relationship(lazy='selectin') # type: ignore
+    favorite_genres: Mapped[list['Genre']] = relationship( # type: ignore
+        lazy='selectin',
+        secondary='user_favorite_genres'
+    )
+    books: Mapped[list['Book']] = relationship(lazy='selectin') # type: ignore
