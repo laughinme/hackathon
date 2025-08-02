@@ -4,4 +4,4 @@ from .genres_table import Genre
 
 from .books_interface import BooksInterface
 from .genres_interface import GenresInterface
-# from .authors_interface
+from .authors_interface import AuthorsInterface
