@@ -1,5 +1,11 @@
-from uuid import UUID
+import aiofiles
+import shutil
 
+from uuid import UUID, uuid4
+from pathlib import Path
+from fastapi import UploadFile, status, HTTPException
+
+from core.config import Settings
 from domain.users import UserPatch, GenresPatch
 from database.relational_db import (
     UoW,
@@ -7,11 +13,11 @@ from database.relational_db import (
     User, 
     UserGenreInterface,
     GenresInterface,
-    UserGenre,
     CitiesInterface
 )
 from .exceptions import IncorrectGenreId, IncorrectCityId
 
+settings = Settings() # type: ignore
 
 class UserService:
     def __init__(
@@ -59,3 +65,30 @@ class UserService:
         
         if to_add:
             await self.ug_repo.bulk_add(new_ids, user.id)
+
+    async def add_picture(
+        self,
+        file: UploadFile,
+        user: User
+    ) -> None:
+        folder = Path(settings.MEDIA_DIR, "users", str(user.id))
+        if folder.exists():
+            shutil.rmtree(folder)
+        folder.mkdir(parents=True, exist_ok=True)
+
+        if file.content_type not in ("image/jpeg", "image/png"):
+            raise HTTPException(
+                status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="Only jpg / png allowed"
+            )
+
+        ext  = ".jpg" if file.content_type == "image/jpeg" else ".png"
+        name = f"{uuid4()}{ext}"
+
+        async with aiofiles.open(folder / name, "wb") as out:
+            while chunk := await file.read(1024 * 1024):
+                await out.write(chunk)
+
+        url = f"{settings.SITE_URL}/{settings.MEDIA_DIR}/users/{user.id}/{name}"
+
+        user.avatar_url = url
