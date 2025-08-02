@@ -5,13 +5,11 @@ import { Link } from 'react-router-dom';
 const UserHeader = () => {
   return (
     <header className="w-full p-4 flex items-center" style={{ backgroundColor: 'var(--md-sys-color-surface-container-low)' }}>
-      {/* Логотип */}
       <div className="flex items-center mr-8">
         <Book size={28} style={{ color: 'var(--md-sys-color-primary)' }} />
         <span className="text-xl font-bold ml-2" style={{ color: 'var(--md-sys-color-on-surface)' }}>BOOK-EXCHANGE 2.0</span>
       </div>
 
-      {/* Поиск (теперь просто визуальный элемент) */}
       <div className="flex-grow max-w-lg relative">
         <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--md-sys-color-on-surface-variant)' }} />
         <input
@@ -27,7 +25,6 @@ const UserHeader = () => {
         />
       </div>
 
-      {/* Навигация пользователя */}
       <nav className="flex items-center ml-auto space-x-6">
         <a href="#" className="flex items-center space-x-2" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
           <Map size={20} />
