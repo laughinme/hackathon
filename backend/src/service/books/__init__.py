@@ -14,4 +14,4 @@ async def get_books_service(
 ) -> BookService:
     genres_repo = GenresInterface(uow.session)
     books_repo = BooksInterface(uow.session)
-    return BookService(genres_repo, books_repo)
+    return BookService(uow, genres_repo, books_repo)

@@ -1,5 +1,5 @@
-import uvicorn
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from starlette.middleware.cors import CORSMiddleware
 
@@ -23,6 +23,9 @@ app = FastAPI(
     debug=True
 )
 
+# Mount static
+app.mount('/media', StaticFiles(directory=config.MEDIA_DIR, check_dir=False), 'media')
+
 # Including routers
 app.include_router(get_api_routers())
 app.include_router(get_webhooks())
@@ -43,6 +46,3 @@ app.add_middleware(
     allow_headers=['*'],
     allow_credentials=True
 )
-
-# if __name__ == "__main__":
-#     uvicorn.run(app, host=config.API_HOST, port=config.API_PORT)

@@ -5,6 +5,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from domain.auth import Role
 from database.relational_db import User, UoW, get_uow
 from service.auth import TokenService, get_token_service
+from service.users import UserService, get_user_service
 
 
 security = HTTPBearer(
@@ -16,7 +17,7 @@ security = HTTPBearer(
 async def auth_user(
     creds: Annotated[HTTPAuthorizationCredentials, Depends(security)],
     token_svc: Annotated[TokenService, Depends(get_token_service)],
-    uow: Annotated[UoW, Depends(get_uow)],
+    user_svc: Annotated[UserService, Depends(get_user_service)],
 ) -> User:
     # if creds is None:
     #     raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not Authorized")
@@ -26,7 +27,7 @@ async def auth_user(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Bad access token passed")
     
     user_id = payload['sub']
-    user = await User.from_id(uow.session, user_id)
+    user = await user_svc.get_user(user_id)
     if user is None:
         raise HTTPException(401, detail="Not Authorized")
     

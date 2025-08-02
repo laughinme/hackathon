@@ -15,9 +15,6 @@ class Book(TimestampMixin, Base):
     owner_id: Mapped[UUID] = mapped_column(
         Uuid(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), nullable=False
     )
-    city_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey('cities.id', ondelete='CASCADE'), nullable=False, index=True
-    )
     author_id: Mapped[int] = mapped_column(
         Integer, ForeignKey('authors.id', ondelete='CASCADE'), nullable=False
     )
@@ -38,7 +35,6 @@ class Book(TimestampMixin, Base):
     
     is_available: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     
-    city: Mapped['City'] = relationship(lazy='selectin') # type: ignore
     owner: Mapped['User'] = relationship(lazy='selectin') # type: ignore
     author: Mapped['Author'] = relationship(lazy='selectin') # type: ignore
     genre: Mapped['Genre'] = relationship(lazy='selectin') # type: ignore

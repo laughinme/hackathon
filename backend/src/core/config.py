@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     JWT_PRIVATE_KEY: str
     JWT_PUBLIC_KEY: str
     JWT_ALGO: str = 'RS256'
-    ACCESS_TTL: int = 60 * 5
+    ACCESS_TTL: int = 60 * 15
     REFRESH_TTL: int = 60 * 60 * 24 * 7
     CSRF_HMAC_KEY: bytes
     
@@ -34,6 +34,7 @@ class Settings(BaseSettings):
 
     # Site data (url, paths)
     SITE_URL: str = ''
+    MEDIA_DIR: str = 'media'
 
 
 def configure_logging():

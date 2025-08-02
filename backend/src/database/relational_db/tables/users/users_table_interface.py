@@ -15,7 +15,7 @@ class UserInterface:
         self.session.add(user)
         return user
     
-    async def get_by_id(self, id: UUID) -> User | None:
+    async def get_by_id(self, id: UUID | str) -> User | None:
         user = await self.session.scalar(
             select(User).where(User.id == id)
         )

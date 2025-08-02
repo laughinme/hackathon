@@ -183,3 +183,4 @@ cython_debug/
 # Custom
 secrets/
 *.DS_Store
+/backend/src/media

@@ -29,6 +29,9 @@ class UserService:
         self.genres_repo = genres_repo
         self.cities_repo = cities_repo
         
+    async def get_user(self, user_id: UUID | str) -> User | None:
+        return await self.user_repo.get_by_id(user_id)
+        
     async def patch_user(self, payload: UserPatch, user: User):
         data = payload.model_dump(exclude_none=True)
         

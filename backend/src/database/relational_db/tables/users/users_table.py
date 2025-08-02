@@ -44,6 +44,7 @@ class User(TimestampMixin, Base):
         lazy='selectin',
         secondary='user_favorite_genres'
     )
+    books: Mapped[list['Book']] = relationship(lazy='selectin') # type: ignore
     
     @property
     def age(self) -> int | None:

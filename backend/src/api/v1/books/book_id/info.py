@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 from fastapi import APIRouter, Depends, Path, HTTPException
 
 from domain.books import BookModel
@@ -17,7 +18,7 @@ config = Settings() # pyright: ignore[reportCallIssue]
     responses={404: {'description': 'Book with this `book_id` not found'}},
 )
 async def get_book(
-    book_id: Annotated[int, Path(...)],
+    book_id: Annotated[UUID, Path(...)],
     # _: Annotated[User, Depends(auth_user)],
     svc: Annotated[BookService, Depends(get_books_service)],
 ):

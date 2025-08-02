@@ -1,3 +1,3 @@
-from .books import BookModel
+from .books import BookModel, BookCreate
 from .genres import GenreModel
 from .authors import AuthorModel
