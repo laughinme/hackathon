@@ -14,10 +14,11 @@ config = Settings() # pyright: ignore[reportCallIssue]
 @router.get(
     path='/for_you',
     response_model=list[BookModel],
-    summary='Get books for "For You" page',
+    summary='Get books for "For You" page (BETA)',
 )
 async def for_you(
     user: Annotated[User, Depends(auth_user)],
     svc: Annotated[BookService, Depends(get_books_service)],
 ):
-    pass
+    books = await svc.list_books(user, filter=True)
+    return books

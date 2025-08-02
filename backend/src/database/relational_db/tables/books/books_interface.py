@@ -2,7 +2,10 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from utils import dist_expression
 from .books_table import Book
+from ..geography import ExchangeLocation
+from ..users import User
 
 
 class BooksInterface:
@@ -27,3 +30,26 @@ class BooksInterface:
         )
         
         return book
+    
+    async def recommended_books(self, user: User) -> list[Book]:
+        books = await self.session.scalars(
+            select(Book)
+            .join(ExchangeLocation)
+            .where(
+                Book.genre.in_(user.favorite_genres),
+                Book.language == user.language,
+                ExchangeLocation.city_id == user.city_id
+            )
+            .order_by(
+                dist_expression(ExchangeLocation, user.latitude, user.longitude) # type: ignore
+            )
+        )
+        
+        return list(books.all())
+    
+    async def list_books(self) -> list[Book]:
+        books = await self.session.scalars(
+            select(Book)
+        )
+        
+        return list(books.all())

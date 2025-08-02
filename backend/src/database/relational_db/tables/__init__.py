@@ -3,3 +3,4 @@ from .table_base import Base
 from .users import *
 from .books import *
 from .geography import *
+from .statistics import *

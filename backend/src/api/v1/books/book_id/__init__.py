@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 def get_specific_book_router() -> APIRouter:
     from .info import router as info_router
     from .photos import router as photos_router
+    from .interactions import router as interactions_router
     
     router = APIRouter(
         prefix='/{book_id}'
@@ -11,5 +12,6 @@ def get_specific_book_router() -> APIRouter:
 
     router.include_router(info_router)
     router.include_router(photos_router)
+    router.include_router(interactions_router)
     
     return router
