@@ -1,18 +1,25 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { BookOpen, BarChart3, ShieldCheck, Users, Clock, CheckCircle, XCircle, LayoutDashboard, Library } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
 import LoginPage from './components/auth/LoginPage';
 import RegisterPage from './components/auth/RegisterPage';
 import Dashboard from './components/pages/Dashboard';
 import Moderation from './components/pages/Moderation';
 import Sidebar from './components/layout/Sidebar';
-import PrivateRoute from './components/layout/PrivateRoute';
+import UserHeader from './components/layout/UserHeader';
+import HomePage from './components/pages/HomePage';
+import UserProfilePage from './components/pages/UserProfilePage';
+import AddBookPage from './components/pages/AddBookPage';
 
-import apiProtected, { setAccessToken, getAccessToken } from './api/axios';
+import apiProtected, { apiPublic, setAccessToken, getAccessToken } from './api/axios';
 
 export const AuthContext = createContext(null);
+
+const INITIAL_BOOKS = [
+    { id: 1, title: 'Война и мир', author: 'Лев Толстой', rating: 4.8, genre: 'Классика', distanceNum: 0.8, distance: '0.8 км', owner: { name: 'Анна К.', rating: 4.9, avatar: 'https://placehold.co/80x80/DBC66E/3A3000?text=A' }, condition: 'good', added: '2 ч. назад', status: 'available', image: 'https://placehold.co/400x600/3A342B/E8E2D4?text=Война+и+мир', tags: ['Классика', 'История'], publisher: 'Эксмо', year: 2019, description: 'Величайший роман всех времен и народов, эпическая картина русской жизни начала XIX века.' },
+    { id: 2, title: 'Гарри Поттер и философский камень', author: 'Дж. К. Роулинг', rating: 4.9, genre: 'Фэнтези', distanceNum: 1.2, distance: '1.2 км', owner: { name: 'Михаил П.', rating: 4.7, avatar: null }, condition: 'new', added: '2 ч. назад', status: 'available', image: 'https://placehold.co/400x600/3A342B/E8E2D4?text=Гарри+Поттер', tags: ['Фэнтези', 'Приключения'], publisher: 'Росмэн', year: 2000, description: 'Приключения юного волшебника Гарри Поттера и его друзей в школе чародейства и волшебства Хогвартс.' },
+    { id: 3, title: 'Мастер и Маргарита', author: 'Михаил Булгаков', rating: 4.7, genre: 'Классика', distanceNum: 2.5, distance: '2.5 км', owner: { name: 'Елена С.', rating: 4.8, avatar: null }, condition: 'good', added: '2 ч. назад', status: 'reserved', image: 'https://placehold.co/400x600/3A342B/E8E2D4?text=Мастер+и+Маргарита', tags: ['Мистика', 'Сатира'], publisher: 'АСТ', year: 2015, description: 'Захватывающая история о визите дьявола в Москву 1930-х годов, переплетенная с историей Понтия Пилата.' },
+    { id: 4, title: 'Атлант расправил плечи', author: 'Айн Рэнд', rating: 4.6, genre: 'Философия', distanceNum: 3.1, distance: '3.1 км', owner: { name: 'Дмитрий В.', rating: 5.0, avatar: null }, condition: 'good', added: '5 ч. назад', status: 'available', image: 'https://placehold.co/400x600/3A342B/E8E2D4?text=Атлант', tags: ['Философия', 'Антиутопия'], publisher: 'Альпина', year: 2021, description: 'Роман-антиутопия, в котором ключевые фигуры американского бизнеса объявляют забастовку и исчезают, оставляя страну в хаосе.' },
+];
 
 const StyleInjector = () => {
   React.useEffect(() => {
@@ -99,15 +106,61 @@ const StyleInjector = () => {
 
 export default function App() {
   const [token, setToken] = useState(getAccessToken() || null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const [allBooks, setAllBooks] = useState(INITIAL_BOOKS);
+
+  const addBook = (formData) => {
+    const newBook = {
+      id: Date.now(),
+      title: formData.title,
+      author: formData.author,
+      genre: formData.genre,
+      condition: formData.condition,
+      description: formData.description,
+      year: formData.year,
+      publisher: formData.publisher,
+      tags: formData.tags,
+      image: formData.images.length > 0 ? URL.createObjectURL(formData.images[0]) : `https://placehold.co/400x600/3A342B/E8E2D4?text=${formData.title.replace(' ', '+')}`,
+      rating: 0,
+      distanceNum: 0.1,
+      distance: '0.1 км',
+      owner: { name: 'Анна К.' }, 
+      added: 'только что',
+      status: 'available',
+      location: formData.exchangeLocation,
+    };
+    setAllBooks(prevBooks => [newBook, ...prevBooks]);
+  };
 
   useEffect(() => {
-    if (token) {
-      setAccessToken(token);
-    } else {
-      setAccessToken(null);
-    }
-  }, [token]);
+    const checkAuthStatus = async () => {
+      if (getAccessToken()) {
+        setToken(getAccessToken());
+        setIsAuthLoading(false);
+        return;
+      }
+       
+      try {
+        const response = await apiPublic.post('/auth/refresh');
+        const newAccessToken = response.data.access_token;
+        setToken(newAccessToken);
+        setAccessToken(newAccessToken);
+        if (location.pathname === '/login' || location.pathname === '/register') {
+            navigate('/');
+        }
+      } catch (error) {
+        setToken(null);
+        setAccessToken(null);
+      } finally {
+        setIsAuthLoading(false);
+      }
+    };
+
+    checkAuthStatus();
+  }, [location.pathname]);
 
   const login = (newToken) => {
     setToken(newToken);
@@ -116,11 +169,20 @@ export default function App() {
   };
 
   const logout = () => {
-    setToken(null);
-    setAccessToken(null);
-    // TODO: можно добавить запрос на /api/v1/auth/logout, если нужно
-    navigate('/login');
+    apiProtected.post('/auth/logout').finally(() => {
+      setToken(null);
+      setAccessToken(null);
+      navigate('/login');
+    });
   };
+
+  if (isAuthLoading) {
+    return (
+        <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: 'var(--md-sys-color-background)' }}>
+          <p style={{ color: 'var(--md-sys-color-on-background)' }}>Загрузка...</p>
+        </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ token, login, logout }}>
@@ -129,24 +191,49 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         
-        <Route element={<PrivateRoute />}>
-          <Route path="/" element={
-            <div className="flex flex-row min-h-screen">
-              <Sidebar />
-              <main className="flex flex-col flex-1 p-8 overflow-auto">
-                <Dashboard />
-              </main>
-            </div>
-          } />
-          <Route path="/moderation" element={
-            <div className="flex flex-row min-h-screen">
-              <Sidebar />
-              <main className="flex flex-col flex-1 p-8 overflow-auto">
-                <Moderation />
-              </main>
-            </div>
-          } />
-        </Route>
+        <Route path="/" element={
+          <div className="flex flex-row min-h-screen">
+            <Sidebar />
+            <main className="flex flex-col flex-1 p-8 overflow-auto">
+              <Dashboard />
+            </main>
+          </div>
+        } />
+        <Route path="/moderation" element={
+          <div className="flex flex-row min-h-screen">
+            <Sidebar />
+            <main className="flex flex-col flex-1 p-8 overflow-auto">
+              <Moderation />
+            </main>
+          </div>
+        } />
+
+        <Route path="/home" element={
+          <div className="flex flex-col min-h-screen">
+            <UserHeader />
+            <main className="flex-1 overflow-auto">
+              <HomePage books={allBooks} />
+            </main>
+          </div>
+        } />
+
+        <Route path="/profile" element={
+          <div className="flex flex-col min-h-screen">
+            <UserHeader />
+            <main className="flex-1 overflow-auto">
+              <UserProfilePage allBooks={allBooks} />
+            </main>
+          </div>
+        } />
+        
+        <Route path="/add-book" element={
+          <div className="flex flex-col min-h-screen">
+            <UserHeader />
+            <main className="flex-1 overflow-auto">
+              <AddBookPage onAddBook={addBook} />
+            </main>
+          </div>
+        } />
       </Routes>
     </AuthContext.Provider>
   );

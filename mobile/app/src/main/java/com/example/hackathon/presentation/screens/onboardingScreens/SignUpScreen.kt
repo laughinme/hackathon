@@ -1,7 +1,6 @@
 package com.example.hackathon.presentation.screens.onboardingScreens
 
 import android.content.res.Configuration
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,7 +24,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,12 +31,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.PreviewTheme
 import com.example.hackathon.domain.model.Resource
-import com.example.hackathon.presentation.viewmodel.OnboardingViewModel
+import com.example.hackathon.presentation.viewmodel.onboardingViewModel.AuthViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun SignUpScreen(
-    viewModel: OnboardingViewModel = hiltViewModel(),
+    viewModel: AuthViewModel = hiltViewModel(),
     onSignUpSuccess: () -> Unit,
     onNavigateToSignIn: () -> Unit
 ) {

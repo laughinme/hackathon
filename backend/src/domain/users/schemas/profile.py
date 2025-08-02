@@ -14,9 +14,8 @@ class UserModel(BaseModel):
     avatar_url: HttpUrl | None = Field(None)
     bio: str | None = Field(None)
     birth_date: date | None = Field(None)
+    age: int | None = Field(None)
     gender: Gender | None = Field(None)
-    
-    # favorite_genres: list[int] = Field(..., description='List of genres ids')
     
     city_id: int | None = Field(None)
     latitude: Annotated[float, confloat(ge=-90, le=90)] | None = Field(None)
