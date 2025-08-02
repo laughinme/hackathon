@@ -1,15 +1,19 @@
 package com.example.hackathon.data.remote.network
 
 
+import com.example.hackathon.data.remote.dto.GenresPatchRequest
 import com.example.hackathon.data.remote.dto.TokenPairDto
 import com.example.hackathon.data.remote.dto.UserLoginRequest
 import com.example.hackathon.data.remote.dto.UserModelDto
+import com.example.hackathon.data.remote.dto.UserPatchRequest
 import com.example.hackathon.data.remote.dto.UserRegisterRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.PUT
 
 interface ApiService {
 
@@ -55,7 +59,21 @@ interface ApiService {
      * Для этого эндпоинта требуется токен доступа.
      */
     @GET("/api/v1/users/me/")
-    suspend fun getMe(): Response<  UserModelDto>
+    suspend fun getMe(): Response<UserModelDto>
+
+    /**
+     * Частично обновляет информацию о пользователе.
+     * @param request Тело запроса с полями для обновления.
+     */
+    @PATCH("/api/v1/users/me/")
+    suspend fun updateProfile(@Body request: UserPatchRequest): Response<UserModelDto>
+
+    /**
+     * Полностью заменяет список любимых жанров пользователя.
+     * @param request Тело запроса со списком ID жанров.
+     */
+    @PUT("/api/v1/users/me/genres")
+    suspend fun updateGenres(@Body request: GenresPatchRequest): Response<UserModelDto>
 }
 
 /**

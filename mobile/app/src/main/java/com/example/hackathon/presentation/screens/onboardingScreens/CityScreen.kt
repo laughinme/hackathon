@@ -18,6 +18,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,25 +29,26 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.PreviewTheme
-import com.example.hackathon.presentation.viewmodel.onboardingViewModel.CityPickerViewModel
+import com.example.hackathon.presentation.viewmodel.ProfileViewModel
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CityScreen(
-    viewModel: CityPickerViewModel = hiltViewModel(),
+    viewModel: ProfileViewModel = hiltViewModel(), // Используем ProfileViewModel
     onNext: () -> Unit
 ) {
-
+    // TODO: Загрузить этот список из API
     val cities = listOf("Новосибирск", "Москва", "Санкт-Петербург")
-
-    val expanded by viewModel.expanded.collectAsStateWithLifecycle()
-    val selectedCity by viewModel.selectedCity.collectAsStateWithLifecycle()
+    var expanded by remember { mutableStateOf(false) }
+    val selectedCity by viewModel.city.collectAsStateWithLifecycle()
 
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f), contentAlignment = Alignment.Center
+                .weight(1f),
+            contentAlignment = Alignment.Center
         ) {
             Text("Choose your city", fontSize = 25.sp)
         }
@@ -57,24 +61,29 @@ fun CityScreen(
         ) {
             ExposedDropdownMenuBox(
                 expanded = expanded,
-                onExpandedChange = {
-                    viewModel.onExpandedChanged()
-                }
+                onExpandedChange = { expanded = !expanded }
             ) {
                 TextField(
                     modifier = Modifier
-                        //.menuAnchor() вроде устаревшая какая та тема
+                        .menuAnchor()
                         .fillMaxWidth(),
                     value = selectedCity,
                     onValueChange = {},
                     readOnly = true,
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 )
-                ExposedDropdownMenu(expanded = expanded, onDismissRequest = {}) {
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
                     cities.forEach { city ->
-                        DropdownMenuItem(text = { Text(city) }, onClick = {
-                            viewModel.onCitySelected(city = city)
-                        })
+                        DropdownMenuItem(
+                            text = { Text(city) },
+                            onClick = {
+                                viewModel.onCityChange(city)
+                                expanded = false
+                            }
+                        )
                     }
                 }
             }
@@ -89,10 +98,9 @@ fun CityScreen(
             Button(
                 modifier = Modifier
                     .height(60.dp)
-                    .fillMaxWidth(0.9f), onClick = {
-                    viewModel.onCityClicked()
-                    onNext()
-                }) {
+                    .fillMaxWidth(0.9f),
+                onClick = onNext
+            ) {
                 Text("Continue", style = MaterialTheme.typography.headlineSmall)
             }
         }
