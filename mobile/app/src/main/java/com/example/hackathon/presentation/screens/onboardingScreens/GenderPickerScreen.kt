@@ -27,45 +27,35 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.PreviewTheme
-import com.example.hackathon.presentation.viewmodel.OnboardingViewModel
+import com.example.hackathon.presentation.viewmodel.ProfileViewModel
 
 @Composable
 fun GenderPickerScreen(
-    viewModel: OnboardingViewModel = hiltViewModel(),
+    viewModel: ProfileViewModel = hiltViewModel(), // Используем ProfileViewModel
     onNext: () -> Unit
 ) {
     val genders = listOf("Male", "Female", "Other")
-    val selectedGender by viewModel.selectedGender.collectAsStateWithLifecycle()
+    val selectedGender by viewModel.gender.collectAsStateWithLifecycle()
 
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(modifier = Modifier
-            .weight(1f)
-            .fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
             Text(text = "Choose your gender", fontSize = 30.sp)
         }
-        Box(modifier = Modifier
-            .weight(1f)
-            .fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 genders.forEach { gender ->
                     val isSelected = (gender == selectedGender)
                     OutlinedButton(
-                        onClick = {
-                            viewModel.onSelectedGenderChanged(newGender = gender)
-                        },
-                        colors = if (isSelected) {
-                            ButtonDefaults.outlinedButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            )
-                        } else {
-                            ButtonDefaults.outlinedButtonColors()
-                        },
-                        modifier = Modifier
-                            .width(110.dp)
-                            .height(55.dp)
-                            .offset(x = (-1 * genders.indexOf(gender)).dp)
-                            .zIndex(if (isSelected) 1f else 0f)
+                        onClick = { viewModel.onGenderChange(newGender = gender) },
+                        colors = if (isSelected) ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
+                        else ButtonDefaults.outlinedButtonColors(),
+                        modifier = Modifier.width(110.dp).height(55.dp).offset(x = (-1 * genders.indexOf(gender)).dp).zIndex(if (isSelected) 1f else 0f)
                     ) {
                         Text(text = gender)
                     }
@@ -73,25 +63,19 @@ fun GenderPickerScreen(
             }
         }
         Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(bottom = 60.dp),
+            modifier = Modifier.weight(1f).fillMaxWidth().padding(bottom = 60.dp),
             contentAlignment = Alignment.BottomCenter
         ) {
             Button(
-                modifier = Modifier
-                    .height(60.dp)
-                    .fillMaxWidth(0.9f),
-                onClick = {
-                    viewModel.onGenderPickerClicked()
-                    onNext()
-                }) {
+                modifier = Modifier.height(60.dp).fillMaxWidth(0.9f),
+                onClick = onNext
+            ) {
                 Text("Continue", style = MaterialTheme.typography.headlineSmall)
             }
         }
     }
 }
+
 
 @Preview(showBackground = true, name = "Light Theme")
 @Preview(

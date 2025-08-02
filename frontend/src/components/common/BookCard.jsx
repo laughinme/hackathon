@@ -1,14 +1,11 @@
 import React from 'react';
 import { Star, MapPin, Award, Clock } from 'lucide-react';
 
-// Добавлен проп onSelect
 const BookCard = ({ book, onReserve, onSelect }) => {
   const isReserved = book.status === 'reserved';
 
   return (
-    // Добавлен курсор и обработчик клика
     <div onClick={onSelect} className="p-4 rounded-xl flex flex-col cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg" style={{ backgroundColor: 'var(--md-sys-color-surface-container-high)' }}>
-      {/* Верхняя часть */}
       <div className="flex mb-4">
         <div className="w-24 h-36 rounded-lg flex-shrink-0 mr-4 bg-cover bg-center" style={{ backgroundImage: `url(${book.image || 'https://placehold.co/200x300/3A342B/E8E2D4?text=No+Image'})`, backgroundColor: 'var(--md-sys-color-surface-variant)' }}></div>
         <div>
@@ -21,16 +18,14 @@ const BookCard = ({ book, onReserve, onSelect }) => {
         </div>
       </div>
 
-      {/* Детали */}
       <div className="space-y-2 text-sm mb-4" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
         <p className="flex items-center"><MapPin size={14} className="mr-2" /> {book.location} - {book.distance}</p>
         <p className="flex items-center"><Award size={14} className="mr-2" /> {book.condition} от {book.owner.name}</p>
         <p className="flex items-center"><Clock size={14} className="mr-2" /> {book.added}</p>
       </div>
 
-      {/* Кнопка действия */}
       <button
-        onClick={(e) => { e.stopPropagation(); if (!isReserved) onReserve(book.id); }} // Останавливаем всплытие, чтобы не сработал onSelect
+        onClick={(e) => { e.stopPropagation(); if (!isReserved) onReserve(book.id); }} 
         disabled={isReserved}
         className={`w-full mt-auto py-2 rounded-lg font-semibold transition-colors ${isReserved ? 'cursor-not-allowed' : ''}`}
         style={{
