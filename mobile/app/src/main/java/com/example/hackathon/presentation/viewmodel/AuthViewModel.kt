@@ -1,6 +1,5 @@
-package com.example.hackathon.presentation.viewmodel.onboardingViewModel
+package com.example.hackathon.presentation.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hackathon.data.remote.dto.UserLoginRequest

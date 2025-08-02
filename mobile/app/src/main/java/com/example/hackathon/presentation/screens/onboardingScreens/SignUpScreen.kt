@@ -31,7 +31,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.PreviewTheme
 import com.example.hackathon.domain.model.Resource
-import com.example.hackathon.presentation.viewmodel.onboardingViewModel.AuthViewModel
+import com.example.hackathon.presentation.viewmodel.AuthViewModel
 import kotlinx.coroutines.launch
 
 @Composable
