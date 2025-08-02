@@ -1,13 +1,16 @@
 from typing import Annotated
 from pydantic import BaseModel, Field, EmailStr, confloat, model_validator, HttpUrl, field_validator
 from datetime import date
+from uuid import UUID
 
 from ..enums import Gender
+from ...books import GenreModel
+from ...geo import CityModel
 
 
 class UserModel(BaseModel):
     """User account representation."""
-
+    id: UUID = Field(...)
     email: EmailStr = Field(..., description="User e-mail")
     
     username: str | None = Field(None, description="User's display name")
@@ -17,7 +20,10 @@ class UserModel(BaseModel):
     age: int | None = Field(None)
     gender: Gender | None = Field(None)
     
-    city_id: int | None = Field(None)
+    favorite_genres: list[GenreModel] = Field(default_factory=list)
+    
+    city: CityModel | None = Field(None)
+    
     latitude: Annotated[float, confloat(ge=-90, le=90)] | None = Field(None)
     longitude: Annotated[float, confloat(ge=-90, le=90)] | None = Field(None)
     

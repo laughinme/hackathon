@@ -1,9 +1,7 @@
 from sqlalchemy.orm import mapped_column, Mapped
-from sqlalchemy import String, Boolean, select, ForeignKey, Integer, Float
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import String, Boolean, ForeignKey, Integer, Float
 from sqlalchemy.dialects.postgresql import ARRAY
 
-from ..common import dist_expression
 from ..table_base import Base
 from ..mixins import TimestampMixin
 
@@ -31,10 +29,10 @@ class ExchangeLocation(TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     
     
-    @classmethod
-    async def nearest_point(cls, session: AsyncSession, lat, lon) -> "ExchangeLocation | None":
-        return await session.scalar(
-            select(cls)
-            .order_by(dist_expression(cls, lat, lon))
-            .limit(1)
-        )
+    # @classmethod
+    # async def nearest_point(cls, session: AsyncSession, lat, lon) -> "ExchangeLocation | None":
+    #     return await session.scalar(
+    #         select(cls)
+    #         .order_by(dist_expression(cls, lat, lon))
+    #         .limit(1)
+    #     )

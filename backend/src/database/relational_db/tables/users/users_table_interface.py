@@ -3,6 +3,7 @@ from pydantic import EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from utils.nearest_point import dist_expression
 from .users_table import User
 
 
@@ -14,23 +15,33 @@ class UserInterface:
         self.session.add(user)
         return user
     
-    
     async def get_by_id(self, id: UUID) -> User | None:
         user = await self.session.scalar(
-            select(User)
-            .where(
-                User.id == id
-            )
+            select(User).where(User.id == id)
         )
         
         return user
     
     async def get_by_email(self, email: EmailStr) -> User | None:
         user = await self.session.scalar(
-            select(User)
-            .where(
-                User.email == email
-            )
+            select(User).where(User.email == email)
         )
         
         return user
+    
+    async def nearby_users(
+        self,
+        lat: float,
+        lon: float,
+        radius_km: int = 5,
+    ):
+        """
+        Find users within a radius of `radius_km` kilometers
+        using the Haversine formula directly in sql
+        """
+        stmt = (
+            select(User)
+            .where(dist_expression(User, lat, lon) <= radius_km)
+            .order_by(dist_expression(User, lat, lon))
+        )
+        return (await self.session.scalars(stmt)).all()

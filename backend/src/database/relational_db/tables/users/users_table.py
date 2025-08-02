@@ -1,13 +1,11 @@
 from uuid import UUID, uuid4
 from datetime import datetime, date
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import ForeignKey, Integer, Uuid, String, Boolean, DateTime, select, Float, Date
+from sqlalchemy import ForeignKey, Integer, Uuid, String, Boolean, DateTime, Float, Date
 from sqlalchemy.dialects.postgresql import BYTEA, ENUM
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.auth import Role
 from domain.users import Gender
-from ..common import dist_expression
 from ..table_base import Base
 from ..mixins import TimestampMixin
 
@@ -41,6 +39,11 @@ class User(TimestampMixin, Base):
     is_onboarded: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     banned: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     
+    city: Mapped['City'] = relationship(lazy='selectin') # type: ignore
+    favorite_genres: Mapped[list['Genre']] = relationship( # type: ignore
+        lazy='selectin',
+        secondary='user_favorite_genres'
+    )
     
     @property
     def age(self) -> int | None:
@@ -51,33 +54,3 @@ class User(TimestampMixin, Base):
             today.year - self.birth_date.year
             - ((today.month, today.day) < (self.birth_date.month, self.birth_date.day))
         )
-
-    @classmethod
-    async def from_id(cls, session: AsyncSession, user_id: UUID | str) -> "User | None":
-        return await session.get(cls, user_id)
-    
-    @classmethod
-    async def by_email(cls, session: AsyncSession, email: str) -> "User | None":
-        return await session.scalar(
-            select(cls)
-            .where(cls.email == email)
-        )
-        
-    @classmethod
-    async def nearby_users(
-        cls,
-        session: AsyncSession,
-        lat: float,
-        lon: float,
-        radius_km: int = 5,
-    ):
-        """
-        Find users within a radius of `radius_km` kilometers
-        using the Haversine formula directly in sql
-        """
-        stmt = (
-            select(cls)
-            .where(dist_expression(cls, lat, lon) <= radius_km)
-            .order_by(dist_expression(cls, lat, lon))
-        )
-        return (await session.scalars(stmt)).all()

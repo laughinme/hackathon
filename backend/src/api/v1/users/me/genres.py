@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 
 from database.relational_db import User
-from domain.users import UserModel, GenresPatch, GenresModel
+from domain.users import UserModel, GenresPatch
 from core.config import Settings
 from core.security import auth_user
 from service.users import UserService, get_user_service
