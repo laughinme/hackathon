@@ -13,7 +13,8 @@ from database.relational_db import (
     User,
     UoW,
     AuthorsInterface,
-    Author
+    Author,
+    Genre
 )
 from domain.books import BookCreate
 
@@ -45,6 +46,9 @@ class BookService:
     
     async def get_author(self, author_id: int) -> Author | None:
         return await self.authors_repo.by_id(author_id)
+    
+    async def get_genre(self, genre_id: int) -> Genre | None:
+        return await self.genre_repo.by_id(genre_id)
 
     async def create_book(self, payload: BookCreate, user: User):
         book = Book(**payload.model_dump())

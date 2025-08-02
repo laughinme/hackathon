@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 
 from database.relational_db import User
-from domain.books import BookModel, BookCreate
+from domain.books import BookModel
 from core.config import Settings
 from core.security import auth_user
 from service.books import BookService, get_books_service

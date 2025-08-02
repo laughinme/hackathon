@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Depends
-from core.security import auth_user
+from fastapi import APIRouter
 
 
 def get_geo_router() -> APIRouter:
