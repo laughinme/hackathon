@@ -3,6 +3,8 @@ package com.example.hackathon.data.remote.network
 
 import com.example.hackathon.data.remote.dto.BookCreateRequest
 import com.example.hackathon.data.remote.dto.BookModelDto
+import com.example.hackathon.data.remote.dto.CityModelDto
+import com.example.hackathon.data.remote.dto.ExchangeLocationDto
 import com.example.hackathon.data.remote.dto.GenreModelDto
 import com.example.hackathon.data.remote.dto.GenresPatchRequest
 import com.example.hackathon.data.remote.dto.TokenPairDto
@@ -21,6 +23,7 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface ApiService {
 
@@ -103,7 +106,37 @@ interface ApiService {
      */
     @GET("/api/v1/books/genres/")
     suspend fun getGenres(): Response<List<GenreModelDto>>
+
+    /**
+     * Получение списка всех поддерживаемых городов.
+     * @return Список моделей городов.
+     */
+    @GET("/api/v1/geo/cities/")
+    suspend fun listCities(): Response<List<CityModelDto>>
+
+    /**
+     * Получение списка всех точек обмена, отсортированных по расстоянию до пользователя.
+     * Требуется авторизация (HTTPBearer).
+     * @param limit Максимальное количество возвращаемых точек (по умолчанию 30).
+     * @param filter Нужно ли сортировать точки по расстоянию от пользователя (по умолчанию true).
+     * @return Список моделей точек обмена.
+     */
+    @GET("/api/v1/geo/exchange_locations/")
+    suspend fun listLocations(
+        @Query("limit") limit: Int? = null,
+        @Query("filter") filter: Boolean? = null
+    ): Response<List<ExchangeLocationDto>>
+
+    /**
+     * Получение ближайшей точки обмена к пользователю.
+     * Требуется авторизация (HTTPBearer).
+     * @return Модель ближайшей точки обмена.
+     */
+    @GET("/api/v1/geo/exchange_locations/nearest")
+    suspend fun getNearestExchangePoint(): Response<ExchangeLocationDto>
 }
+
+
 
 /**
  * Отдельный интерфейс только для эндпоинта обновления токенов.
