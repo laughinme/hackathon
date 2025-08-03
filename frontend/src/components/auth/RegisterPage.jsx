@@ -8,28 +8,20 @@ const RegisterPage = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login } = useContext(AuthContext); 
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
-
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     setError(null);
     try {
-     
       const response = await apiPublic.post('/auth/register', data);
-      
-      
       const { access_token } = response.data;
-      
-     
       if (access_token) {
-        login(access_token, '/home'); 
+        login(access_token, '/onboarding');
       } else {
-       
         setError('Регистрация прошла успешно, но не удалось получить токен. Пожалуйста, войдите в систему.');
         navigate('/login');
       }
-      
     } catch (err) {
       console.error("Ошибка регистрации:", err);
       if (err.response && err.response.status === 409) {
@@ -41,11 +33,9 @@ const RegisterPage = () => {
       setIsSubmitting(false);
     }
   };
-
   const getInputBorder = (field) => {
     return errors[field] || error ? 'border-red-500' : 'border-[var(--md-sys-color-outline-variant)]';
   };
-
   return (
     <div className="flex items-center justify-center min-h-screen p-4" style={{ backgroundColor: 'var(--md-sys-color-background)' }}>
       <div className="w-full max-w-md p-8 rounded-xl shadow-lg" style={{ backgroundColor: 'var(--md-sys-color-surface-container)' }}>
@@ -132,5 +122,4 @@ const RegisterPage = () => {
     </div>
   );
 };
-
 export default RegisterPage;

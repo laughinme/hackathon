@@ -3,30 +3,26 @@ import { Link, useNavigate } from 'react-router-dom';
 import { apiPublic } from '../../api/axios';
 import { AuthContext } from '../../App';
 import { BookOpen } from 'lucide-react';
-
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
     try {
       const response = await apiPublic.post('/auth/login', {
         email,
         password,
       });
-
       const { access_token } = response.data;
       if (access_token) {
         if (email === 'admin@gmail.com') {
-          login(access_token, '/'); 
+          login(access_token, '/');
         } else {
-          login(access_token, '/home'); 
+          login(access_token, '/home');
         }
       } else {
         setError('Login successful but no token received.');
@@ -40,7 +36,6 @@ const LoginPage = () => {
       }
     }
   };
-
   return (
     <div className="flex items-center justify-center min-h-screen p-4" style={{ backgroundColor: 'var(--md-sys-color-background)' }}>
       <div className="w-full max-w-md p-8 rounded-xl shadow-lg" style={{ backgroundColor: 'var(--md-sys-color-surface-container)' }}>
@@ -90,13 +85,11 @@ const LoginPage = () => {
             Войти
           </button>
         </form>
-
         <div className="flex items-center my-4">
           <div className="flex-grow border-t" style={{ borderColor: 'var(--md-sys-color-outline-variant)' }}></div>
           <span className="flex-shrink mx-4 text-sm" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>или</span>
           <div className="flex-grow border-t" style={{ borderColor: 'var(--md-sys-color-outline-variant)' }}></div>
         </div>
-
         <div className="space-y-3">
           <Link
             to="/home"
@@ -119,7 +112,6 @@ const LoginPage = () => {
             Перейти в админ-панель
           </Link>
         </div>
-        
         <p className="mt-6 text-center text-sm" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
           Ещё нет аккаунта?{' '}
           <Link to="/register" className="font-semibold" style={{ color: 'var(--md-sys-color-primary)' }}>
@@ -130,5 +122,4 @@ const LoginPage = () => {
     </div>
   );
 };
-
 export default LoginPage;

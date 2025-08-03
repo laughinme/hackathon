@@ -9,19 +9,16 @@ import UserHeader from './components/layout/UserHeader';
 import HomePage from './components/pages/HomePage';
 import UserProfilePage from './components/pages/UserProfilePage';
 import AddBookPage from './components/pages/AddBookPage';
-import PrivateRoute from "./components/layout/PrivateRoute";
-
+import OnboardingPage from './components/pages/OnboardingPage';
+import PrivateRoute from './components/layout/PrivateRoute';
 import apiProtected, { apiPublic, setAccessToken, getAccessToken } from './api/axios';
-
 export const AuthContext = createContext(null);
-
 const INITIAL_BOOKS = [
     { id: 1, title: 'Война и мир', author: 'Лев Толстой', rating: 4.8, genre: 'Классика', distanceNum: 0.8, distance: '0.8 км', owner: { name: 'Анна К.', rating: 4.9, avatar: 'https://placehold.co/80x80/DBC66E/3A3000?text=A' }, condition: 'good', added: '2 ч. назад', status: 'available', image: 'https://placehold.co/400x600/3A342B/E8E2D4?text=Война+и+мир', tags: ['Классика', 'История'], publisher: 'Эксмо', year: 2019, description: 'Величайший роман всех времен и народов, эпическая картина русской жизни начала XIX века.' },
     { id: 2, title: 'Гарри Поттер и философский камень', author: 'Дж. К. Роулинг', rating: 4.9, genre: 'Фэнтези', distanceNum: 1.2, distance: '1.2 км', owner: { name: 'Михаил П.', rating: 4.7, avatar: null }, condition: 'new', added: '2 ч. назад', status: 'available', image: 'https://placehold.co/400x600/3A342B/E8E2D4?text=Гарри+Поттер', tags: ['Фэнтези', 'Приключения'], publisher: 'Росмэн', year: 2000, description: 'Приключения юного волшебника Гарри Поттера и его друзей в школе чародейства и волшебства Хогвартс.' },
     { id: 3, title: 'Мастер и Маргарита', author: 'Михаил Булгаков', rating: 4.7, genre: 'Классика', distanceNum: 2.5, distance: '2.5 км', owner: { name: 'Елена С.', rating: 4.8, avatar: null }, condition: 'good', added: '2 ч. назад', status: 'reserved', image: 'https://placehold.co/400x600/3A342B/E8E2D4?text=Мастер+и+Маргарита', tags: ['Мистика', 'Сатира'], publisher: 'АСТ', year: 2015, description: 'Захватывающая история о визите дьявола в Москву 1930-х годов, переплетенная с историей Понтия Пилата.' },
     { id: 4, title: 'Атлант расправил плечи', author: 'Айн Рэнд', rating: 4.6, genre: 'Философия', distanceNum: 3.1, distance: '3.1 км', owner: { name: 'Дмитрий В.', rating: 5.0, avatar: null }, condition: 'good', added: '5 ч. назад', status: 'available', image: 'https://placehold.co/400x600/3A342B/E8E2D4?text=Атлант', tags: ['Философия', 'Антиутопия'], publisher: 'Альпина', year: 2021, description: 'Роман-антиутопия, в котором ключевые фигуры американского бизнеса объявляют забастовку и исчезают, оставляя страну в хаосе.' },
 ];
-
 const StyleInjector = () => {
   React.useEffect(() => {
     const style = document.createElement('style');
@@ -104,15 +101,12 @@ const StyleInjector = () => {
   }, []);
   return null;
 };
-
 export default function App() {
   const [token, setToken] = useState(getAccessToken() || null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
-
   const [allBooks, setAllBooks] = useState(INITIAL_BOOKS);
-
   const addBook = (formData) => {
     const newBook = {
       id: Date.now(),
@@ -128,47 +122,46 @@ export default function App() {
       rating: 0,
       distanceNum: 0.1,
       distance: '0.1 км',
-      owner: { name: 'Анна К.' }, 
+      owner: { name: 'Анна К.' },
       added: 'только что',
       status: 'available',
       location: formData.exchangeLocation,
     };
     setAllBooks(prevBooks => [newBook, ...prevBooks]);
   };
-
   useEffect(() => {
     const checkAuthStatus = async () => {
-      if (getAccessToken()) {
-        setToken(getAccessToken());
+      const currentToken = getAccessToken();
+      if (currentToken) {
+        setToken(currentToken);
         setIsAuthLoading(false);
         return;
       }
-       
       try {
         const response = await apiPublic.post('/auth/refresh');
         const newAccessToken = response.data.access_token;
         setToken(newAccessToken);
         setAccessToken(newAccessToken);
         if (location.pathname === '/login' || location.pathname === '/register') {
-            navigate('/home'); 
+            navigate('/home', { replace: true });
         }
       } catch (error) {
         setToken(null);
         setAccessToken(null);
+        if (location.pathname !== '/login' && location.pathname !== '/register') {
+          navigate('/login', { replace: true });
+        }
       } finally {
         setIsAuthLoading(false);
       }
     };
-
     checkAuthStatus();
   }, [location.pathname, navigate]);
-
   const login = (newToken, redirectPath = '/home') => {
     setToken(newToken);
     setAccessToken(newToken);
     navigate(redirectPath);
   };
-
   const logout = () => {
     apiProtected.post('/auth/logout').finally(() => {
       setToken(null);
@@ -176,7 +169,6 @@ export default function App() {
       navigate('/login');
     });
   };
-
   if (isAuthLoading) {
     return (
         <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: 'var(--md-sys-color-background)' }}>
@@ -184,17 +176,17 @@ export default function App() {
         </div>
     );
   }
-
   return (
     <AuthContext.Provider value={{ token, login, logout }}>
       <StyleInjector />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        
-        {/* Приватные маршруты для администратора */}
+        <Route path="/onboarding" element={<PrivateRoute />}>
+          <Route index element={<OnboardingPage />} />
+        </Route>
         <Route path="/" element={<PrivateRoute />}>
-          <Route path="/" element={
+          <Route index element={
             <div className="flex flex-row min-h-screen">
               <Sidebar />
               <main className="flex flex-col flex-1 p-8 overflow-auto">
@@ -202,7 +194,7 @@ export default function App() {
               </main>
             </div>
           } />
-          <Route path="/moderation" element={
+          <Route path="moderation" element={
             <div className="flex flex-row min-h-screen">
               <Sidebar />
               <main className="flex flex-col flex-1 p-8 overflow-auto">
@@ -211,9 +203,8 @@ export default function App() {
             </div>
           } />
         </Route>
-        
         <Route path="/home" element={<PrivateRoute />}>
-          <Route path="/home" element={
+          <Route index element={
             <div className="flex flex-col min-h-screen">
               <UserHeader />
               <main className="flex-1 overflow-auto">
@@ -222,9 +213,8 @@ export default function App() {
             </div>
           } />
         </Route>
-
         <Route path="/profile" element={<PrivateRoute />}>
-          <Route path="/profile" element={
+          <Route index element={
             <div className="flex flex-col min-h-screen">
               <UserHeader />
               <main className="flex-1 overflow-auto">
@@ -233,9 +223,8 @@ export default function App() {
             </div>
           } />
         </Route>
-        
         <Route path="/add-book" element={<PrivateRoute />}>
-          <Route path="/add-book" element={
+          <Route index element={
             <div className="flex flex-col min-h-screen">
               <UserHeader />
               <main className="flex-1 overflow-auto">
