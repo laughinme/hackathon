@@ -54,14 +54,6 @@ interface ApiService {
     suspend fun logout(): Response<Unit> // Ответ 200 без тела
 
     /**
-     * Обновление пары токенов с использованием refresh token.
-     * ВАЖНО: Этот запрос выполняется особым образом через Authenticator.
-     * Мы создадим отдельный интерфейс для этого, чтобы избежать рекурсивных вызовов в interceptor.
-     */
-    @POST("/api/v1/auth/refresh")
-    suspend fun refreshTokens(): Response<TokenPairDto>
-
-    /**
      * Получение информации о текущем пользователе.
      * Для этого эндпоинта требуется токен доступа.
      */

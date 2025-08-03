@@ -32,7 +32,7 @@ import com.example.hackathon.presentation.viewmodel.ProfileViewModel
 
 @Composable
 fun GenderPickerScreen(
-    viewModel: ProfileViewModel = hiltViewModel(), // Используем ProfileViewModel
+    viewModel: ProfileViewModel = hiltViewModel(),
     onNext: () -> Unit
 ) {
     val genders = listOf("Male", "Female", "Other")

@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val tokenManager: TokenManager, // Для проверки статуса входа
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _startDestination = MutableStateFlow(Routes.AUTH_GRAPH)
@@ -44,6 +44,6 @@ class MainViewModel @Inject constructor(
 
     private fun checkProfileStatus(): Boolean {
         // Здесь будет твоя логика проверки, завершен ли онбординг
-        return true // Для теста
+        return true
     }
 }

@@ -10,7 +10,6 @@ import javax.inject.Provider
 
 class TokenAuthenticator @Inject constructor(
     private val tokenManager: TokenManager,
-    // Используем Provider<T> для Hilt, чтобы разорвать циклическую зависимость
     private val tokenRefreshApiService: Provider<TokenRefreshApiService>
 ) : Authenticator {
 

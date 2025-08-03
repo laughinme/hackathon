@@ -31,7 +31,7 @@ import com.example.hackathon.presentation.viewmodel.ProfileViewModel
 
 @Composable
 fun GenresPickerScreen(
-    viewModel: ProfileViewModel = hiltViewModel(), // Используем ProfileViewModel
+    viewModel: ProfileViewModel = hiltViewModel(),
     onProfileComplete: () -> Unit
 ) {
     val allGenres by viewModel.allGenres.collectAsStateWithLifecycle()

@@ -252,7 +252,6 @@ fun ConditionDropdown(
 @Composable
 fun AddBookScreenPreview() {
     PreviewTheme {
-        // В превью мы не можем использовать HiltViewModel, поэтому передаем фейковый
         AddBookScreen(onBookCreatedSuccessfully = {})
     }
 }

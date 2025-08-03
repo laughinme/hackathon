@@ -36,7 +36,7 @@ import com.example.hackathon.presentation.viewmodel.ProfileViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CityScreen(
-    viewModel: ProfileViewModel = hiltViewModel(), // Используем ProfileViewModel
+    viewModel: ProfileViewModel = hiltViewModel(),
     onNext: () -> Unit
 ) {
     // TODO: Загрузить этот список из API
