@@ -27,6 +27,7 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.PreviewTheme
+import com.example.hackathon.presentation.viewmodel.ProfileEvent
 import com.example.hackathon.presentation.viewmodel.ProfileViewModel
 
 @Composable
@@ -52,7 +53,7 @@ fun GenderPickerScreen(
                 genders.forEach { gender ->
                     val isSelected = (gender == selectedGender)
                     OutlinedButton(
-                        onClick = { viewModel.onGenderChange(newGender = gender) },
+                        onClick = { viewModel.onEvent(ProfileEvent.OnGenderChange(gender)) },
                         colors = if (isSelected) ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
                         else ButtonDefaults.outlinedButtonColors(),
                         modifier = Modifier.width(110.dp).height(55.dp).offset(x = (-1 * genders.indexOf(gender)).dp).zIndex(if (isSelected) 1f else 0f)

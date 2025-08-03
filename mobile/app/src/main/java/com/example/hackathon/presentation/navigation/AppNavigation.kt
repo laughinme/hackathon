@@ -95,7 +95,17 @@ fun AppNavigation(navController: NavHostController, startDestination: String) {
             composable(Routes.HOME_TAB) { HomeTabScreen() }
             composable(Routes.FRIENDS_TAB) { FriendsTabScreen() }
             composable(Routes.CHAT_TAB) { ChatTabScreen() }
-            composable(Routes.PROFILE_TAB) { ProfileTabScreen() }
+            composable(Routes.PROFILE_TAB) { ProfileTabScreen(
+                onLogoutSuccess = {
+                    // Переходим на граф аутентификации, очищая весь стек
+                    // до основного графа. Пользователь не сможет вернуться назад.
+                    navController.navigate(Routes.AUTH_GRAPH) {
+                        popUpTo(Routes.MAIN_GRAPH) {
+                            inclusive = true
+                        }
+                    }
+                }
+            ) }
 
             // Экран добавления книги
             composable(Routes.ADD_BOOK) {

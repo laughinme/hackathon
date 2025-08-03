@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.PreviewTheme
+import com.example.hackathon.presentation.viewmodel.ProfileEvent
 import com.example.hackathon.presentation.viewmodel.ProfileViewModel
 
 
@@ -80,7 +81,7 @@ fun CityScreen(
                         DropdownMenuItem(
                             text = { Text(city) },
                             onClick = {
-                                viewModel.onCityChange(city)
+                                viewModel.onEvent(ProfileEvent.OnCityChange(city))
                                 expanded = false
                             }
                         )

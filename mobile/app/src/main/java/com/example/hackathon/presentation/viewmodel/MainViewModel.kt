@@ -16,7 +16,6 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val tokenManager: TokenManager, // Для проверки статуса входа
-    private val logoutUseCase: LogoutUseCase // Для выполнения выхода
 ) : ViewModel() {
 
     private val _startDestination = MutableStateFlow(Routes.AUTH_GRAPH)
@@ -39,20 +38,6 @@ class MainViewModel @Inject constructor(
                 userIsLoggedIn && profileIsComplete -> Routes.MAIN_GRAPH
                 userIsLoggedIn && !profileIsComplete -> Routes.PROFILE_CREATION_GRAPH
                 else -> Routes.AUTH_GRAPH
-            }
-        }
-    }
-
-    fun onLogoutClicked() {
-        viewModelScope.launch {
-            logoutUseCase().collect { result ->
-                // Здесь ты можешь обработать результат выхода,
-                // например, показать Toast или обновить UI
-                if (result is Resource.Success) {
-                    // После успешного выхода, скорее всего, нужно будет
-                    // снова направить пользователя на экран входа
-                    _startDestination.value = Routes.AUTH_GRAPH
-                }
             }
         }
     }

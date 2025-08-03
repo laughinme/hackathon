@@ -26,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.PreviewTheme
 import com.example.hackathon.domain.model.Resource
+import com.example.hackathon.presentation.viewmodel.ProfileEvent
 import com.example.hackathon.presentation.viewmodel.ProfileViewModel
 
 @Composable
@@ -61,7 +62,7 @@ fun GenresPickerScreen(
                     allGenres.forEach { genre ->
                         FilterChip(
                             selected = genre in selectedGenres,
-                            onClick = { viewModel.onGenreSelected(genre = genre) },
+                            onClick = { viewModel.onEvent(ProfileEvent.OnGenreSelected(genre)) },
                             label = { Text(genre) }
                         )
                     }
@@ -73,7 +74,7 @@ fun GenresPickerScreen(
             ) {
                 Button(
                     modifier = Modifier.height(60.dp).fillMaxWidth(0.9f),
-                    onClick = { viewModel.saveOnboardingProfile() }, // На последнем экране вызываем сохранение
+                    onClick = { viewModel.onEvent(ProfileEvent.OnSaveOnboardingClick) }, // На последнем экране вызываем сохранение
                     enabled = profileState !is Resource.Loading
                 ) {
                     Text("Complete", style = MaterialTheme.typography.headlineSmall)
