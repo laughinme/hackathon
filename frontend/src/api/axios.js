@@ -2,10 +2,22 @@ import axios from 'axios';
 
 const BASE_URL = 'https://hackathon-backend.fly.dev/api/v1';
 
+const getCookie = (name) => {
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const [cookieName, cookieValue] = cookie.split('=').map(c => c.trim());
+    if (cookieName === name) {
+      return decodeURIComponent(cookieValue);
+    }
+  }
+  return null;
+};
+
 export const apiPublic = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    'X-Client': 'web',
   },
 });
 
@@ -47,15 +59,29 @@ apiProtected.interceptors.response.use(
 
     if (error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      try {
-        const response = await apiPublic.post('/auth/refresh');
-        const newAccessToken = response.data.access_token;
-        
-        setAccessToken(newAccessToken);
 
+      try {
+        const csrfToken = getCookie('csrf_token');
+
+        const response = await apiPublic.post(
+          '/auth/refresh',
+          {},
+          {
+            headers: {
+              'X-CSRF-Token': csrfToken
+            },
+            withCredentials: true,
+          }
+        );
+        
+        const newAccessToken = response.data.access_token;
+        setAccessToken(newAccessToken);
         originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
         return apiProtected(originalRequest);
+        
       } catch (refreshError) {
+        setAccessToken(null);
+        window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }

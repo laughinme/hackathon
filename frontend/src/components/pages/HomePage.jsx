@@ -5,7 +5,7 @@ import BookCard from '../common/BookCard';
 import BookFilters from '../common/BookFilters';
 import BookDetailPage from './BookDetailPage';
 
-const HomePage = ({ books }) => {
+const HomePage = ({ books, isLoading }) => {
   const navigate = useNavigate();
   const [view, setView] = useState({ name: 'catalog', bookId: null });
   const [filters, setFilters] = useState({ sort: 'newest', genre: 'all', distance: 50, rating: 1 });
@@ -15,6 +15,7 @@ const HomePage = ({ books }) => {
   };
 
   const processedBooks = useMemo(() => {
+    if (!books) return [];
     let filtered = books
       .filter(book => filters.genre === 'all' || book.genre === filters.genre)
       .filter(book => book.distanceNum <= filters.distance)
@@ -29,11 +30,15 @@ const HomePage = ({ books }) => {
         break;
       case 'newest':
       default:
-        filtered.sort((a, b) => b.id - a.id);
+        filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         break;
     }
     return filtered;
   }, [books, filters]);
+
+  if (isLoading) {
+    return <div className="p-8 text-center">Загрузка книг...</div>;
+  }
 
   if (view.name === 'detail') {
     const selectedBook = books.find(b => b.id === view.bookId);
@@ -62,16 +67,23 @@ const HomePage = ({ books }) => {
 
       <BookFilters onFilterChange={setFilters} />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {processedBooks.map(book => (
-          <BookCard 
-            key={book.id} 
-            book={book} 
-            onReserve={() => handleReserveBook(book.id)} 
-            onSelect={() => setView({ name: 'detail', bookId: book.id })} 
-          />
-        ))}
-      </div>
+      {processedBooks.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {processedBooks.map(book => (
+            <BookCard 
+              key={book.id} 
+              book={book} 
+              onReserve={() => handleReserveBook(book.id)} 
+              onSelect={() => setView({ name: 'detail', bookId: book.id })} 
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-16 rounded-xl" style={{ backgroundColor: 'var(--md-sys-color-surface-container)' }}>
+            <h3 className="text-lg font-semibold">Книги не найдены</h3>
+            <p style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Попробуйте изменить фильтры или добавить свою книгу</p>
+        </div>
+      )}
     </div>
   );
 };
