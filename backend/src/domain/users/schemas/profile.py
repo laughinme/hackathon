@@ -3,12 +3,13 @@ from pydantic import BaseModel, Field, EmailStr, confloat, model_validator, Http
 from datetime import date
 from uuid import UUID
 
+from domain.common import TimestampModel
 from ..enums import Gender
 from ...books import GenreModel
 from ...geo import CityModel
 
 
-class UserModel(BaseModel):
+class UserModel(TimestampModel):
     """User account representation."""
     id: UUID = Field(...)
     email: EmailStr = Field(..., description="User e-mail")
@@ -30,6 +31,7 @@ class UserModel(BaseModel):
     
     is_onboarded: bool
     banned: bool
+    public: bool = Field(..., description='Whether user wants his profile to be visible to others')
 
 
 class UserPatch(BaseModel):
@@ -44,6 +46,8 @@ class UserPatch(BaseModel):
     
     latitude: Annotated[float, confloat(ge=-90, le=90)] | None = Field(None)
     longitude: Annotated[float, confloat(ge=-180, le=180)] | None = Field(None)
+    
+    public: bool | None = Field(None, description='Whether user wants his profile to be visible to others')
 
     @model_validator(mode='after')
     def _coords_integrity(self):

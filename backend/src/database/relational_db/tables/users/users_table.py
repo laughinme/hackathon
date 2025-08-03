@@ -1,7 +1,7 @@
 from uuid import UUID, uuid4
 from datetime import datetime, date
-from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import ForeignKey, Integer, Uuid, String, Boolean, DateTime, Float, Date
+from sqlalchemy.orm import mapped_column, Mapped, relationship, column_property
+from sqlalchemy import ForeignKey, Integer, Uuid, String, Boolean, DateTime, Float, Date, false
 from sqlalchemy.dialects.postgresql import BYTEA, ENUM
 
 from domain.auth import Role
@@ -39,6 +39,7 @@ class User(TimestampMixin, Base):
     # role: Mapped[Role] = mapped_column(Enum(Role), nullable=False, default=Role.GUEST)
     is_onboarded: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     banned: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false())
     
     @property
     def age(self) -> int | None:

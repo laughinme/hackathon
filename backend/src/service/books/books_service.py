@@ -1,5 +1,6 @@
 import aiofiles
 import shutil
+import logging
 
 from uuid import UUID, uuid4
 from pathlib import Path
@@ -19,6 +20,7 @@ from database.relational_db import (
 from domain.books import BookCreate
 
 settings = Settings() # type: ignore
+logger = logging.getLogger(__name__)
 
 class BookService:
     def __init__(
@@ -81,6 +83,7 @@ class BookService:
         urls: list[str] = []
         for f in files:
             if f.content_type not in ("image/jpeg", "image/png"):
+                logger.error(f'Incorrect media type uploaded: {f.content_type}')
                 raise HTTPException(
                     status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                     detail="Only jpg / png allowed"
@@ -99,9 +102,13 @@ class BookService:
         book.photo_urls.extend(urls)
         return book
 
-    async def list_books(self, user: User, filter: bool = False):
+    async def list_books(self, user: User, limit: int, filter: bool = False):
         if filter:
-            books = await self.books_repo.recommended_books(user)
+            lat, lon = user.latitude, user.longitude
+            if lat is None or lon is None:
+                raise HTTPException(412, detail='You should complete onboarding first')
+            
+            books = await self.books_repo.recommended_books(user, lat, lon, limit)
         else:
             books = await self.books_repo.list_books()
             

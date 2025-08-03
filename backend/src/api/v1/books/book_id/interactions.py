@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Path
 
 from database.relational_db import User
-from domain.books import BookModel
+from domain.statistics import Interaction
 from core.config import Settings
 from core.security import auth_user
 from service.statistics import StatService, get_stats_service
@@ -22,7 +22,7 @@ async def record_click(
     user: Annotated[User, Depends(auth_user)],
     svc: Annotated[StatService, Depends(get_stats_service)]
 ):
-    await svc.record_click(book_id, user)
+    await svc.record_interaction(book_id, user, Interaction.CLICK)
 
 
 @router.post(
@@ -35,4 +35,4 @@ async def like_book(
     user: Annotated[User, Depends(auth_user)],
     svc: Annotated[StatService, Depends(get_stats_service)]
 ):
-    await svc.like_book(book_id, user)
+    await svc.record_interaction(book_id, user, Interaction.LIKE)

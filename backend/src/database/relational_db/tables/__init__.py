@@ -4,3 +4,4 @@ from .users import *
 from .books import *
 from .geography import *
 from .statistics import *
+from .recommendations import *

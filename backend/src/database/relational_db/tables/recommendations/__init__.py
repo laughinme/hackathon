@@ -1,0 +1,2 @@
+from .user_interest import UserInterest
+from .users_interest_interface import UserInterestInterface
