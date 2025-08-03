@@ -23,7 +23,11 @@ const LoginPage = () => {
 
       const { access_token } = response.data;
       if (access_token) {
-        login(access_token);
+        if (email === 'admin@gmail.com') {
+          login(access_token, '/'); 
+        } else {
+          login(access_token, '/home'); 
+        }
       } else {
         setError('Login successful but no token received.');
       }

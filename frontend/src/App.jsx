@@ -9,6 +9,7 @@ import UserHeader from './components/layout/UserHeader';
 import HomePage from './components/pages/HomePage';
 import UserProfilePage from './components/pages/UserProfilePage';
 import AddBookPage from './components/pages/AddBookPage';
+import PrivateRoute from "./components/layout/PrivateRoute";
 
 import apiProtected, { apiPublic, setAccessToken, getAccessToken } from './api/axios';
 
@@ -149,7 +150,7 @@ export default function App() {
         setToken(newAccessToken);
         setAccessToken(newAccessToken);
         if (location.pathname === '/login' || location.pathname === '/register') {
-            navigate('/');
+            navigate('/home'); 
         }
       } catch (error) {
         setToken(null);
@@ -160,12 +161,12 @@ export default function App() {
     };
 
     checkAuthStatus();
-  }, [location.pathname]);
+  }, [location.pathname, navigate]);
 
-  const login = (newToken) => {
+  const login = (newToken, redirectPath = '/home') => {
     setToken(newToken);
     setAccessToken(newToken);
-    navigate('/');
+    navigate(redirectPath);
   };
 
   const logout = () => {
@@ -191,49 +192,58 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         
-        <Route path="/" element={
-          <div className="flex flex-row min-h-screen">
-            <Sidebar />
-            <main className="flex flex-col flex-1 p-8 overflow-auto">
-              <Dashboard />
-            </main>
-          </div>
-        } />
-        <Route path="/moderation" element={
-          <div className="flex flex-row min-h-screen">
-            <Sidebar />
-            <main className="flex flex-col flex-1 p-8 overflow-auto">
-              <Moderation />
-            </main>
-          </div>
-        } />
-
-        <Route path="/home" element={
-          <div className="flex flex-col min-h-screen">
-            <UserHeader />
-            <main className="flex-1 overflow-auto">
-              <HomePage books={allBooks} />
-            </main>
-          </div>
-        } />
-
-        <Route path="/profile" element={
-          <div className="flex flex-col min-h-screen">
-            <UserHeader />
-            <main className="flex-1 overflow-auto">
-              <UserProfilePage allBooks={allBooks} />
-            </main>
-          </div>
-        } />
+        {/* Приватные маршруты для администратора */}
+        <Route path="/" element={<PrivateRoute />}>
+          <Route path="/" element={
+            <div className="flex flex-row min-h-screen">
+              <Sidebar />
+              <main className="flex flex-col flex-1 p-8 overflow-auto">
+                <Dashboard />
+              </main>
+            </div>
+          } />
+          <Route path="/moderation" element={
+            <div className="flex flex-row min-h-screen">
+              <Sidebar />
+              <main className="flex flex-col flex-1 p-8 overflow-auto">
+                <Moderation />
+              </main>
+            </div>
+          } />
+        </Route>
         
-        <Route path="/add-book" element={
-          <div className="flex flex-col min-h-screen">
-            <UserHeader />
-            <main className="flex-1 overflow-auto">
-              <AddBookPage onAddBook={addBook} />
-            </main>
-          </div>
-        } />
+        <Route path="/home" element={<PrivateRoute />}>
+          <Route path="/home" element={
+            <div className="flex flex-col min-h-screen">
+              <UserHeader />
+              <main className="flex-1 overflow-auto">
+                <HomePage books={allBooks} />
+              </main>
+            </div>
+          } />
+        </Route>
+
+        <Route path="/profile" element={<PrivateRoute />}>
+          <Route path="/profile" element={
+            <div className="flex flex-col min-h-screen">
+              <UserHeader />
+              <main className="flex-1 overflow-auto">
+                <UserProfilePage allBooks={allBooks} />
+              </main>
+            </div>
+          } />
+        </Route>
+        
+        <Route path="/add-book" element={<PrivateRoute />}>
+          <Route path="/add-book" element={
+            <div className="flex flex-col min-h-screen">
+              <UserHeader />
+              <main className="flex-1 overflow-auto">
+                <AddBookPage onAddBook={addBook} />
+              </main>
+            </div>
+          } />
+        </Route>
       </Routes>
     </AuthContext.Provider>
   );
