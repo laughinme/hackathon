@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Query
 
 from database.relational_db import User
 from domain.books import BookModel
@@ -19,6 +19,7 @@ config = Settings() # pyright: ignore[reportCallIssue]
 async def get_books(
     user: Annotated[User, Depends(auth_user)],
     svc: Annotated[BookService, Depends(get_books_service)],
+    limit: int = Query(50, description='Number of books to return'),
 ):
-    books = await svc.list_books(user)
+    books = await svc.list_books(user, limit)
     return books

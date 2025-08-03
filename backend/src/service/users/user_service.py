@@ -49,22 +49,36 @@ class UserService:
         for field, value in data.items():
             setattr(user, field, value)
             
-    async def replace_genres(self, payload: GenresPatch, user: User):
+    async def set_genres(self, payload: GenresPatch, user: User):
         new_ids = payload.favorite_genres
         genres = await self.genres_repo.get_by_ids(new_ids)
         if len(genres) != len(new_ids):
             raise IncorrectGenreId
         
-        current_ids = set(pair.genre_id for pair in await self.ug_repo.list_current_ids(user.id))
+        current_ids = [pair.genre_id for pair in await self.ug_repo.list_ids(user.id)]
+        if current_ids:
+            raise HTTPException(400, detail='IDs cannot be changed after being set.')
         
-        to_add = new_ids - current_ids
-        to_del = current_ids - new_ids
+        await self.ug_repo.bulk_add(new_ids, user.id)
         
-        if to_del:
-            await self.ug_repo.delete_pairs(to_del, user.id)
+        await self.uow.session.refresh(user)
+            
+    # async def replace_genres(self, payload: GenresPatch, user: User):
+    #     new_ids = payload.favorite_genres
+    #     genres = await self.genres_repo.get_by_ids(new_ids)
+    #     if len(genres) != len(new_ids):
+    #         raise IncorrectGenreId
         
-        if to_add:
-            await self.ug_repo.bulk_add(new_ids, user.id)
+    #     current_ids = set(pair.genre_id for pair in await self.ug_repo.list_ids(user.id))
+        
+    #     to_add = new_ids - current_ids
+    #     to_del = current_ids - new_ids
+        
+    #     if to_del:
+    #         await self.ug_repo.delete_pairs(to_del, user.id)
+        
+    #     if to_add:
+    #         await self.ug_repo.bulk_add(new_ids, user.id)
 
     async def add_picture(
         self,
@@ -96,6 +110,6 @@ class UserService:
     async def nearby(self, user: User, radius_km: int):
         lat, lon = user.latitude, user.longitude
         if lat is None or lon is None:
-            raise HTTPException(412, detail='You should set your coordinates and city first')
+            raise HTTPException(412, detail='You should set your coordinates first')
         
         return await self.user_repo.nearby_users(lat, lon, radius_km)

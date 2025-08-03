@@ -15,7 +15,7 @@ class UserGenreInterface:
     async def add(self, user_genre: UserGenre):
         self.session.add(user_genre)
         
-    async def list_current_ids(self, user_id: UUID) -> list[UserGenre]:
+    async def list_ids(self, user_id: UUID) -> list[UserGenre]:
         current_genres = (
             await self.session.scalars(
                 select(UserGenre)

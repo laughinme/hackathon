@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.statistics import Interaction
-from .book_views_table import BookEvent
+from .book_events_table import BookEvent
 from ..geography import ExchangeLocation
 
 
