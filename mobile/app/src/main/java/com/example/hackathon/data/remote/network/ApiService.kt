@@ -78,6 +78,17 @@ interface ApiService {
     suspend fun updateGenres(@Body request: GenresPatchRequest): Response<UserModelDto>
 
     /**
+     * Загружает файл изображения в качестве аватара пользователя.
+     * @param file Файл изображения в формате MultipartBody.Part.
+     * @return Обновленная модель пользователя с новым URL аватара.
+     */
+    @Multipart
+    @PUT("/api/v1/users/me/picture")
+    suspend fun updateProfilePicture(
+        @Part file: MultipartBody.Part
+    ): Response<UserModelDto>
+
+    /**
      * Создание новой книги.
      * Требуется токен доступа.
      * @param request Тело запроса с данными о книге.

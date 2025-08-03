@@ -34,12 +34,11 @@ fun GenresPickerScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
     onProfileComplete: () -> Unit
 ) {
-    val allGenres by viewModel.allGenres.collectAsStateWithLifecycle()
+    val allGenresState by viewModel.allGenresState.collectAsStateWithLifecycle()
     val selectedGenres by viewModel.selectedGenres.collectAsStateWithLifecycle()
     val profileState by viewModel.profileState.collectAsStateWithLifecycle()
     val onboardingSaveComplete by viewModel.onboardingSaveComplete.collectAsStateWithLifecycle()
 
-    // После успешного сохранения вызываем onProfileComplete
     LaunchedEffect(key1 = onboardingSaveComplete) {
         if (onboardingSaveComplete) {
             onProfileComplete()
@@ -52,19 +51,32 @@ fun GenresPickerScreen(
                 modifier = Modifier.fillMaxWidth().weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Choose your favorite genres", fontSize = 25.sp, modifier = Modifier.padding(horizontal = 16.dp))
+                Text("Выберите любимые жанры", fontSize = 25.sp, modifier = Modifier.padding(horizontal = 16.dp))
             }
             Box(
                 modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp),
                 contentAlignment = Alignment.Center
             ) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    allGenres.forEach { genre ->
-                        FilterChip(
-                            selected = genre in selectedGenres,
-                            onClick = { viewModel.onEvent(ProfileEvent.OnGenreSelected(genre)) },
-                            label = { Text(genre) }
-                        )
+                when (val state = allGenresState) {
+                    is Resource.Loading -> CircularProgressIndicator()
+                    is Resource.Error -> Text(state.message ?: "Ошибка загрузки", color = MaterialTheme.colorScheme.error)
+                    is Resource.Success -> {
+                        val genres = state.data ?: emptyList()
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            genres.forEach { genre ->
+                                FilterChip(
+                                    selected = genre in selectedGenres,
+                                    onClick = {
+                                        // Отправляем правильное событие с объектом Genre
+                                        viewModel.onEvent(ProfileEvent.OnGenreChange(genre))
+                                    },
+                                    label = { Text(genre.name) }
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -74,10 +86,13 @@ fun GenresPickerScreen(
             ) {
                 Button(
                     modifier = Modifier.height(60.dp).fillMaxWidth(0.9f),
-                    onClick = { viewModel.onEvent(ProfileEvent.OnSaveOnboardingClick) }, // На последнем экране вызываем сохранение
-                    enabled = profileState !is Resource.Loading
+                    onClick = {
+                        // Вызываем универсальное событие сохранения
+                        viewModel.onEvent(ProfileEvent.OnSaveClick)
+                    },
+                    enabled = profileState !is Resource.Loading && selectedGenres.isNotEmpty()
                 ) {
-                    Text("Complete", style = MaterialTheme.typography.headlineSmall)
+                    Text("Завершить", style = MaterialTheme.typography.headlineSmall)
                 }
             }
         }
