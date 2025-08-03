@@ -1,5 +1,7 @@
 package com.example.hackathon.presentation.screens.tabs
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,6 +27,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,6 +39,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -60,6 +64,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -105,6 +110,14 @@ fun ProfileTabScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
+    LaunchedEffect(key1 = true) {
+        viewModel.snackbarEvent.collect { message ->
+            scope.launch {
+                snackbarHostState.showSnackbar(message)
+            }
+        }
+    }
+
     // Launcher для выбора изображения
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -113,6 +126,17 @@ fun ProfileTabScreen(
             uriToFile(context, it)?.let { file ->
                 viewModel.onEvent(ProfileEvent.OnPictureSelected(file))
             }
+        }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            viewModel.onEvent(ProfileEvent.OnFetchLocationClick)
+        } else {
+            // Показываем сообщение, если пользователь отказал в разрешении
+            scope.launch { snackbarHostState.showSnackbar("Для получения координат нужно разрешение на геолокацию") }
         }
     }
 
@@ -151,7 +175,16 @@ fun ProfileTabScreen(
         allCitiesState = allCitiesState,
         selectedCityId = selectedCityId,
         onEvent = viewModel::onEvent,
-        onAvatarClick = { imagePickerLauncher.launch("image/*") }
+        onAvatarClick = { imagePickerLauncher.launch("image/*") },
+        onFetchLocationClick = {
+            // Проверяем, есть ли уже разрешение
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                viewModel.onEvent(ProfileEvent.OnFetchLocationClick)
+            } else {
+                // Если нет - запрашиваем
+                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            }
+        }
     )
 }
 
@@ -175,7 +208,8 @@ fun ProfileScreenContent(
     allCitiesState: Resource<List<City>>,
     selectedCityId: Int?,
     onEvent: (ProfileEvent) -> Unit,
-    onAvatarClick: () -> Unit
+    onAvatarClick: () -> Unit,
+    onFetchLocationClick: () -> Unit
 ) {
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -250,8 +284,16 @@ fun ProfileScreenContent(
                             Text("Профиль публичный", style = MaterialTheme.typography.bodyLarge)
                             Switch(checked = isPublic, onCheckedChange = { onEvent(ProfileEvent.OnIsPublicChange(it)) })
                         }
-                        Text("Координаты: ${latitude ?: "Неизвестно"}, ${longitude ?: "Неизвестно"}", style = MaterialTheme.typography.bodySmall)
-
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Координаты: ${latitude ?: "Неизвестно"}, ${longitude ?: "Неизвестно"}", style = MaterialTheme.typography.bodySmall)
+                            IconButton(onClick = onFetchLocationClick) {
+                                Icon(Icons.Default.LocationOn, contentDescription = "Получить геолокацию")
+                            }
+                        }
                         // --- Кнопки действий ---
                         Button(onClick = { onEvent(ProfileEvent.OnSaveClick) }, modifier = Modifier.fillMaxWidth()) {
                             Text("Сохранить изменения")

@@ -11,10 +11,13 @@ import com.example.hackathon.domain.model.UserProfileUpdate
 import com.example.hackathon.domain.repository.UserRepository
 import com.example.hackathon.domain.usecase.GetCitiesUseCase
 import com.example.hackathon.domain.usecase.GetGenresUseCase
+import com.example.hackathon.domain.usecase.GetUserLocationUseCase
 import com.example.hackathon.domain.usecase.LogoutUseCase
 import com.example.hackathon.domain.usecase.UpdateProfilePictureUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -42,6 +45,7 @@ sealed interface ProfileEvent {
     object OnSaveClick : ProfileEvent
     object OnLogoutClick : ProfileEvent
     object OnRetry : ProfileEvent
+    object OnFetchLocationClick : ProfileEvent
 }
 
 
@@ -51,8 +55,12 @@ class ProfileViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val getGenresUseCase: GetGenresUseCase,
     private val updateProfilePictureUseCase: UpdateProfilePictureUseCase,
-    private val getCitiesUseCase: GetCitiesUseCase
+    private val getCitiesUseCase: GetCitiesUseCase,
+    private val getUserLocationUseCase: GetUserLocationUseCase
 ) : ViewModel() {
+    private val _snackbarEvent = MutableSharedFlow<String>()
+    val snackbarEvent = _snackbarEvent.asSharedFlow()
+
 
     // --- ОБЩЕЕ СОСТОЯНИЕ ЭКРАНА ---
     private val _profileState = MutableStateFlow<Resource<UserProfile>>(Resource.Loading())
@@ -125,6 +133,7 @@ class ProfileViewModel @Inject constructor(
                 loadAllGenres()
                 loadAllCities() // Добавляем перезагрузку городов
             }
+            ProfileEvent.OnFetchLocationClick -> fetchUserLocation()
         }
     }
 
@@ -211,6 +220,37 @@ class ProfileViewModel @Inject constructor(
             // Также можно обновить _profileState, чтобы показать индикатор загрузки/ошибку
             // _profileState.value = result
         }.launchIn(viewModelScope)
+    }
+
+    private fun fetchUserLocation() {
+        viewModelScope.launch {
+            when(val result = getUserLocationUseCase()) {
+                is Resource.Success -> {
+                    val location = result.data
+                    if (location != null) {
+                        _latitude.value = location.latitude
+                        _longitude.value = location.longitude
+                        _snackbarEvent.emit("Локация получена: ${location.latitude}, ${location.longitude}")
+                    } else {
+                        _snackbarEvent.emit("Не удалось получить данные локации")
+                    }
+                    // просто возвращаем текущее успешное состояние, чтобы убрать индикатор загрузки.
+                    val currentProfile = (_profileState.value as? Resource.Success)?.data
+                    if (currentProfile != null) {
+                        _profileState.value = Resource.Success(currentProfile)
+                    } else {
+                        // Если профиля еще нет, перезагружаем его
+                        loadProfile()
+                    }
+                }
+                is Resource.Error -> {
+                    val errorMessage = result.message ?: "Ошибка геолокации"
+                    _snackbarEvent.emit(errorMessage)
+                    _profileState.value = Resource.Error(errorMessage)
+                }
+                else -> {}
+            }
+        }
     }
 
     private fun logout() {
