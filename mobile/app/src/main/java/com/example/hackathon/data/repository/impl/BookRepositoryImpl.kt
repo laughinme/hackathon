@@ -1,5 +1,7 @@
 package com.example.hackathon.data.repository.impl
 
+import android.content.Context
+import androidx.core.net.toUri
 import com.example.hackathon.data.remote.dto.toDomain
 import com.example.hackathon.data.remote.dto.toRequest
 import com.example.hackathon.data.remote.network.ApiService
@@ -8,6 +10,7 @@ import com.example.hackathon.domain.model.CreateBookParams
 import com.example.hackathon.domain.model.Genre
 import com.example.hackathon.domain.model.Resource
 import com.example.hackathon.domain.repository.BookRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -16,7 +19,8 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import javax.inject.Inject
 
 class BookRepositoryImpl @Inject constructor(
-    private val apiService: ApiService
+    private val apiService: ApiService,
+    @ApplicationContext private val context: Context // Инжектим контекст для доступа к ContentResolver
 ) : BookRepository {
 
     override fun createBook(params: CreateBookParams): Flow<Resource<Book>> = flow {
@@ -40,7 +44,9 @@ class BookRepositoryImpl @Inject constructor(
             // Шаг 2: Если есть фото, загружаем их
             val finalBookDto = if (params.photos.isNotEmpty()) {
                 val photoParts = params.photos.map { file ->
-                    val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+                    // Получаем MIME-тип файла
+                    val mimeType = context.contentResolver.getType(file.toUri()) ?: "image/jpeg"
+                    val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
                     MultipartBody.Part.createFormData("files", file.name, requestFile)
                 }
 
