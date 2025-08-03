@@ -99,7 +99,10 @@ fun BookCardPreview() {
                     id = 1,
                     title = "Миша шиша",
                     address = "ул. Тверская, д. 1",
-                    city = City(id = 1, name = "Москва")
+                    latitude = 30.33,
+                    longitude = 30.33,
+                    city = City(id = 1, name = "Москва"),
+                    isActive = true
                 ),
                 isAvailable = true,
                 createdAt = java.time.OffsetDateTime.now(),

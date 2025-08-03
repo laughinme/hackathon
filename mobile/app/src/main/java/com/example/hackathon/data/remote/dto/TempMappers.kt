@@ -35,7 +35,10 @@ fun ExchangeLocationDto.toDomain(): ExchangeLocation = ExchangeLocation(
     id = this.id,
     title = this.title,
     address = this.address,
-    city = this.city.toDomain()
+    latitude = this.latitude,
+    longitude = this.longitude,
+    city = this.city.toDomain(),
+    isActive = this.isActive
 )
 
 

@@ -4,5 +4,8 @@ data class ExchangeLocation(
     val id: Int,
     val title: String,
     val address: String,
-    val city: City
+    val latitude: Double,
+    val longitude: Double,
+    val city: City,
+    val isActive: Boolean,
 )
