@@ -7,7 +7,7 @@ def dist_expression(
     lon: float,
 ):
     """
-    Find nearest point using the Haversine formula directly in sql
+    Calculate distance using the Haversine formula directly in sql
     """
     earth_radius = 6371
     dist_expr = earth_radius * func.acos(

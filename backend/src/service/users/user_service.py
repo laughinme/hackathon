@@ -92,3 +92,10 @@ class UserService:
         url = f"{settings.SITE_URL}/{settings.MEDIA_DIR}/users/{user.id}/{name}"
 
         user.avatar_url = url
+
+    async def nearby(self, user: User, radius_km: int):
+        lat, lon = user.latitude, user.longitude
+        if lat is None or lon is None:
+            raise HTTPException(412, detail='You should set your coordinates and city first')
+        
+        return await self.user_repo.nearby_users(lat, lon, radius_km)
