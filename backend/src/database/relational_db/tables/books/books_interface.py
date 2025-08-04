@@ -33,18 +33,21 @@ class BooksInterface:
         
         return book    
     
-    async def recommended_books(self, user: User, lat: float, lon: float, limit: int) -> list[Book]:
-        dist_km = dist_expression(ExchangeLocation, lat, lon)
-        
+    async def recommended_books(self, user: User, lat: float | None, lon: float | None, limit: int) -> list[Book]:
         w_geo, w_pop, w_rec, w_int = 1.0, 2.0, 1.5, 1.0
         fresh_period = 3
+        score = 0
         
-        geo_score = func.least(10 / (1 + dist_km), 10)
+        if lat is not None and lon is not None:
+            dist_km = dist_expression(ExchangeLocation, lat, lon)
+            geo_score = func.least(10 / (1 + dist_km), 10)
+            score += w_geo*geo_score
+        
         popularity_score = func.log(1 + BookStats.views + BookStats.likes*3 + BookStats.reserves*4)
         recent_score = func.exp( - (func.extract("epoch", func.now() - Book.created_at) / 86400) / fresh_period)
         interest_score = func.least(UserInterest.coef, 30)
         
-        score = w_geo*geo_score + w_pop*popularity_score + w_rec*recent_score + w_int*interest_score
+        score += (w_pop*popularity_score + w_rec*recent_score + w_int*interest_score)
 
         stmt = (
             select(Book)
@@ -55,14 +58,15 @@ class BooksInterface:
                 (UserInterest.user_id == user.id) & (UserInterest.genre_id == Book.genre_id)
             )
             .where(
-                ExchangeLocation.city_id == user.city_id,
-                Book.is_available
+                Book.is_available,
             )
             .order_by(score.desc())
             .limit(limit)
         )
         if user.language is not None:
             stmt = stmt.where(Book.language == user.language)
+        if user.city_id is not None:
+            stmt = stmt.where(ExchangeLocation.city_id == user.city_id)
         
         books = await self.session.scalars(stmt)
         

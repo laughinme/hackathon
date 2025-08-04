@@ -1,6 +1,7 @@
 import logging
 
 from uuid import UUID
+from datetime import datetime, UTC
 from fastapi import HTTPException
 
 from core.config import Settings
@@ -12,7 +13,8 @@ from database.relational_db import (
     Exchange,
     Book,
 )
-from domain.exchanges import ExchangeCreate, ExchangeProgress
+from domain.exchanges import ExchangeCreate, ExchangeProgress, ExchangeCancel, ExchangeEdit
+from .exceptions import IncorrectStatusError, IncorrectNewlyError
 
 settings = Settings() # type: ignore
 logger = logging.getLogger(__name__)
@@ -34,11 +36,21 @@ class ExchangeService:
         if book is None:
             raise HTTPException(404, detail='Book with this `book_id` not found.')
         return book
+    
+    async def _ensure_exchange(self, exchange_id: UUID) -> Exchange:
+        exchange = await self.ex_repo.by_id(exchange_id)
+        if exchange is None:
+            raise HTTPException(404, detail='Exchange with this `exchange_id` not found.')
+        return exchange
         
     async def request_exchange(self, book_id: UUID, user: User, payload: ExchangeCreate):
         book = await self._ensure_book(book_id)
         if book.owner_id == user.id:
             raise HTTPException(400, detail="You can't reserve your own book")
+        
+        existing_exchange = await self.ex_repo.by_book_for_requester(book_id, user.id)
+        if existing_exchange is not None:
+            raise HTTPException(400, detail='You cant make more than one request for a single book')
         
         exchange = Exchange(
             book_id=book_id,
@@ -58,6 +70,14 @@ class ExchangeService:
         )
         return exchange
     
+    async def list_all(
+        self, 
+        only_active: bool = True, 
+        limit: int = 50,
+    ):
+        exchanges = await self.ex_repo.list_all(only_active, limit)
+        return exchanges
+    
     async def list_requested(
         self, 
         user: User, 
@@ -75,3 +95,106 @@ class ExchangeService:
     ):
         exchanges = await self.ex_repo.by_owner(user.id, only_active, limit)
         return exchanges
+
+    async def get_exchange(self, exchange_id: UUID, user: User):
+        exchange = await self._ensure_exchange(exchange_id)
+        if not(exchange.owner_id == user.id or exchange.requester_id == user.id):
+            raise HTTPException(403, detail='You dont have access to this resource')
+        
+        return exchange
+    
+    async def accept_exchange(
+        self,
+        exchange_id: UUID,
+        user: User,
+    ):
+        exchange = await self._ensure_exchange(exchange_id)
+        if exchange.owner_id != user.id:
+            raise HTTPException(403, detail='You dont have access to this resource')
+        if not exchange.book.is_available:
+            raise HTTPException(400, detail='You cant accept more than one exchange request for the same book')
+        if exchange.progress != ExchangeProgress.CREATED:
+            raise IncorrectNewlyError
+        
+        exchange.progress = ExchangeProgress.ACCEPTED
+        exchange.book.is_available = False
+        
+        return exchange
+        
+    async def decline_exchange(
+        self,
+        exchange_id: UUID,
+        user: User,
+        payload: ExchangeCancel,
+    ):
+        exchange = await self._ensure_exchange(exchange_id)
+        if exchange.owner_id != user.id:
+            raise HTTPException(403, detail='You dont have access to this resource')
+        if exchange.progress != ExchangeProgress.CREATED:
+            raise IncorrectNewlyError
+        
+        exchange.progress = ExchangeProgress.DECLINED
+        if payload is not None:
+            exchange.cancel_reason = payload.cancel_reason
+                
+        return exchange
+    
+    async def cancel_exchange(
+        self, 
+        exchange_id: UUID,
+        user: User,
+        payload: ExchangeCancel,
+    ):
+        exchange = await self._ensure_exchange(exchange_id)
+        
+        if exchange.owner_id == user.id:
+            if exchange.progress != ExchangeProgress.ACCEPTED:
+                raise IncorrectStatusError
+        elif exchange.requester_id == user.id:
+            if exchange.progress not in (ExchangeProgress.ACCEPTED, ExchangeProgress.CREATED):
+                raise HTTPException(
+                    status_code=400,
+                    detail='You can perform this with only newly created or accepted exchange requests'
+                )
+        else:
+            raise HTTPException(403, detail='You dont have access to this resource')
+        
+        exchange.cancel_reason = payload.cancel_reason
+        exchange.progress = ExchangeProgress.CANCELED
+        exchange.book.is_available = True
+        
+        return exchange
+    
+    async def confirm_exchange(
+        self,
+        exchange_id: UUID,
+        user: User,
+    ):
+        exchange = await self._ensure_exchange(exchange_id)
+        if not(exchange.owner_id == user.id or exchange.requester_id == user.id):
+            raise HTTPException(403, detail='You dont have access to this resource')
+        if exchange.progress != ExchangeProgress.ACCEPTED:
+            raise IncorrectStatusError
+        
+        exchange.progress = ExchangeProgress.FINISHED
+        # Its been set previously, fool proofing
+        exchange.book.is_available = False
+        
+        return exchange
+
+    async def update_exchange(
+        self,
+        exchange_id: UUID,
+        user: User,
+        payload: ExchangeEdit,
+    ):
+        exchange = await self._ensure_exchange(exchange_id)
+        if not(exchange.owner_id == user.id or exchange.requester_id == user.id):
+            raise HTTPException(403, detail='You dont have access to this resource')
+        
+        data = payload.model_dump(exclude_none=True)
+        
+        for name, value in data.items():
+            setattr(exchange, name, value)
+        
+        return exchange

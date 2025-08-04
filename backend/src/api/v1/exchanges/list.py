@@ -20,7 +20,7 @@ async def list_all_exchanges(
     only_active: bool = Query(True, description='Return only active exchanges'),
     limit: int = Query(50, description='Number of exchanges to return'),
 ):
-    return {'message': 'Not implemented yet'}
+    return await svc.list_all(only_active, limit)
 
 
 @router.get(

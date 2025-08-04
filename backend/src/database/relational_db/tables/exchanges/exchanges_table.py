@@ -1,4 +1,3 @@
-from __future__ import annotations
 from uuid import UUID, uuid4
 from datetime import datetime
 from sqlalchemy.orm import mapped_column, Mapped, relationship
@@ -32,6 +31,9 @@ class Exchange(TimestampMixin, Base):
     meeting_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     comment: Mapped[str | None] = mapped_column(String, nullable=True)
     cancel_reason: Mapped[str | None] = mapped_column(String, nullable=True)
+    
+    # confirmed_by_owner: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false())
+    # confirmed_by_requester: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false())
     
     @hybrid_property
     def is_active(self) -> bool:
