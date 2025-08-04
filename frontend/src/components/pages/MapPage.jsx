@@ -4,7 +4,8 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { AuthContext } from '../../App';
 import apiProtected from '../../api/axios';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { X } from 'lucide-react';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -15,6 +16,7 @@ L.Icon.Default.mergeOptions({
 
 const MapPage = () => {
   const { currentUser } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -56,8 +58,20 @@ const MapPage = () => {
   }
 
   return (
-    // --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
     <div className="absolute inset-0">
+      {/* --- КНОПКА ВЫХОДА --- */}
+      <button
+        onClick={() => navigate(-1)} // Возвращает на предыдущую страницу
+        className="absolute top-4 right-4 z-[1000] p-2 rounded-full shadow-lg transition-colors duration-200 hover:bg-[var(--md-sys-color-surface-container-highest)]"
+        style={{
+            backgroundColor: 'var(--md-sys-color-surface-container-high)',
+            color: 'var(--md-sys-color-on-surface-variant)'
+        }}
+        aria-label="Закрыть карту"
+      >
+        <X size={24} />
+      </button>
+
       <MapContainer center={mapCenter} zoom={zoom} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
         <TileLayer
           attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
