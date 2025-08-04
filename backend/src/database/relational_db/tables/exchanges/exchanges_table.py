@@ -3,9 +3,10 @@ from uuid import UUID, uuid4
 from datetime import datetime
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import Uuid, String, ForeignKey, Integer, DateTime
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.dialects.postgresql import ENUM
 
-from domain.exchanges import ExchangeProgress
+from domain.exchanges import ExchangeProgress, ActiveStatuses
 from ..table_base import Base
 from ..mixins import TimestampMixin
 
@@ -32,6 +33,15 @@ class Exchange(TimestampMixin, Base):
     comment: Mapped[str | None] = mapped_column(String, nullable=True)
     cancel_reason: Mapped[str | None] = mapped_column(String, nullable=True)
     
+    @hybrid_property
+    def is_active(self) -> bool:
+        return self.progress in list(ActiveStatuses)
+    
+    @is_active.expression
+    @classmethod
+    def is_active_expr(cls):
+        return cls.progress.in_(list(ActiveStatuses)) 
+        
     book: Mapped['Book'] = relationship( # type: ignore
         back_populates='exchange', lazy='selectin'
     )

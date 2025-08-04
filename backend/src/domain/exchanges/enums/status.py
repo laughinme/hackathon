@@ -8,3 +8,7 @@ class ExchangeProgress(Enum):
     DECLINED = "declined"
     FINISHED = "finished"
     CANCELED = "canceled"
+
+class ActiveStatuses(Enum):
+    CREATED = "created"
+    ACCEPTED = "accepted"

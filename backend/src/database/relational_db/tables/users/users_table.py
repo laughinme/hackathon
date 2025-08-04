@@ -1,7 +1,8 @@
 from uuid import UUID, uuid4
 from datetime import datetime, date
-from sqlalchemy.orm import mapped_column, Mapped, relationship, column_property
+from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import ForeignKey, Integer, Uuid, String, Boolean, DateTime, Float, Date, false
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.dialects.postgresql import BYTEA, ENUM
 
 from domain.auth import Role
