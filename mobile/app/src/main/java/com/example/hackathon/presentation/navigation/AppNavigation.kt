@@ -34,7 +34,6 @@ fun AppNavigation(navController: NavHostController, startDestination: String) {
             composable(Routes.SIGN_IN) {
                 SignInScreen(
                     onSignInSuccess = {
-                        // После входа переходим сразу в главный граф приложения
                         navController.navigate(Routes.MAIN_GRAPH) {
                             popUpTo(Routes.AUTH_GRAPH) { inclusive = true }
                         }
@@ -45,7 +44,6 @@ fun AppNavigation(navController: NavHostController, startDestination: String) {
             composable(Routes.SIGN_UP) {
                 SignUpScreen(
                     onSignUpSuccess = {
-                        // После регистрации переходим в граф создания профиля
                         navController.navigate(Routes.PROFILE_CREATION_GRAPH) {
                             popUpTo(Routes.AUTH_GRAPH) { inclusive = true }
                         }
@@ -78,7 +76,6 @@ fun AppNavigation(navController: NavHostController, startDestination: String) {
             composable(Routes.GENRE_PICKER) {
                 GenresPickerScreen(
                     onProfileComplete = {
-                        // Завершили создание профиля, переходим в главный граф
                         navController.navigate(Routes.MAIN_GRAPH) {
                             popUpTo(Routes.PROFILE_CREATION_GRAPH) {
                                 inclusive = true
@@ -91,12 +88,33 @@ fun AppNavigation(navController: NavHostController, startDestination: String) {
 
         // --- ГРАФ 3: ОСНОВНОЕ ПРИЛОЖЕНИЕ ---
         navigation(
-            startDestination = Routes.HOME, // <-- Стартовый маршрут внутри графа
+            startDestination = Routes.HOME_TAB, // Стартовый экран - вкладка "Home"
             route = Routes.MAIN_GRAPH
         ) {
-            composable(Routes.HOME) {
-                // Теперь этот маршрут ведет на наш новый главный экран с Bottom Bar
-                MainScreen()
+            // Экраны вкладок
+            composable(Routes.HOME_TAB) { HomeTabScreen() }
+            composable(Routes.FRIENDS_TAB) { FriendsTabScreen() }
+            composable(Routes.CHAT_TAB) { ChatTabScreen() }
+            composable(Routes.PROFILE_TAB) { ProfileTabScreen(
+                onLogoutSuccess = {
+                    // Переходим на граф аутентификации, очищая весь стек
+                    // до основного графа. Пользователь не сможет вернуться назад.
+                    navController.navigate(Routes.AUTH_GRAPH) {
+                        popUpTo(Routes.MAIN_GRAPH) {
+                            inclusive = true
+                        }
+                    }
+                }
+            ) }
+
+            // Экран добавления книги
+            composable(Routes.ADD_BOOK) {
+                AddBookScreen(
+                    onBookCreatedSuccessfully = {
+                        // После успешного создания возвращаемся назад
+                        navController.popBackStack()
+                    }
+                )
             }
         }
     }

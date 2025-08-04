@@ -1,5 +1,6 @@
 package com.example.hackathon.data.repository.impl
 
+import android.util.Log
 import com.example.hackathon.data.remote.dto.TokenPairDto
 import com.example.hackathon.data.remote.dto.UserLoginRequest
 import com.example.hackathon.data.remote.dto.UserRegisterRequest
@@ -62,17 +63,25 @@ class AuthRepositoryImpl @Inject constructor(
     override fun logout(): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         try {
+            Log.d("AuthRepositoryImpl", "Trying to logout")
             val response = apiService.logout()
-            if (response.isSuccessful) {
+
+            // Считаем выход успешным, если сервер ответил 2xx ИЛИ 401 (токен недействителен)
+            if (response.isSuccessful || response.code() == 401) {
                 tokenManager.clearTokens()
                 emit(Resource.Success(Unit))
+                Log.d("AuthRepositoryImpl", "Logout successful (or token was already invalid)")
             } else {
-                // Если токен уже невалиден, все равно чистим его локально
+                // Все остальные коды ответа считаем реальной ошибкой
+                val errorMsg = response.errorBody()?.string() ?: "Unexpected logout error"
+                // На всякий случай все равно чистим токены
                 tokenManager.clearTokens()
-                val errorMsg = response.errorBody()?.string() ?: "Ошибка выхода"
                 emit(Resource.Error(errorMsg))
+                Log.d("AuthRepositoryImpl", "Logout error: $errorMsg")
             }
+
         } catch (e: Exception) {
+            // В случае любой другой ошибки (например, нет сети) также чистим токены
             tokenManager.clearTokens()
             emit(Resource.Error(e.localizedMessage ?: "Произошла ошибка"))
         }

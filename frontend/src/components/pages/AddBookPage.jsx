@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { ArrowLeft, Upload, Book, Camera, X } from 'lucide-react';
+import apiProtected from '../../api/axios';
 
 export default function AddBookPage({ onAddBook }) {
   const navigate = useNavigate();
 
+  const [genres, setGenres] = useState([]);
+  const [authors, setAuthors] = useState([]);
+  const [exchangeLocations, setExchangeLocations] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [selectedImages, setSelectedImages] = useState([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState([]);
-  const [tags, setTags] = useState([]);
-  const [currentTag, setCurrentTag] = useState('');
 
   const {
     register,
@@ -18,15 +22,30 @@ export default function AddBookPage({ onAddBook }) {
     formState: { errors, isSubmitting }
   } = useForm({
     defaultValues: {
-      language: 'Русский',
+      language: 'ru',
       condition: 'good',
-      tags: [],
-      images: []
     }
   });
 
-  const genres = ['Классика', 'Фэнтези', 'Нон-фикшн', 'Научная фантастика', 'Детектив', 'Роман', 'История', 'Психология'];
-  const exchangeLocations = ['Центральная библиотека', 'Метро Сокольники', 'Парк Горького', 'МГУ', 'Красная площадь'];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [genresRes, authorsRes, locationsRes] = await Promise.all([
+          apiProtected.get('/books/genres/'),
+          apiProtected.get('/books/authors/'),
+          apiProtected.get('/geo/exchange_locations/')
+        ]);
+        setGenres(genresRes.data);
+        setAuthors(authorsRes.data);
+        setExchangeLocations(locationsRes.data);
+      } catch (error) {
+        console.error("Failed to fetch form data", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleImageUpload = (event) => {
     const files = Array.from(event.target.files || []);
@@ -50,25 +69,25 @@ export default function AddBookPage({ onAddBook }) {
     setValue('images', newFiles);
   };
 
-  const addTag = () => {
-    if (currentTag.trim() && !tags.includes(currentTag.trim()) && tags.length < 5) {
-      const newTags = [...tags, currentTag.trim()];
-      setTags(newTags);
-      setValue('tags', newTags);
-      setCurrentTag('');
+  const handleFormSubmit = async (data) => {
+    const payload = {
+      title: data.title,
+      description: data.description,
+      author_id: parseInt(data.author_id, 10),
+      genre_id: parseInt(data.genre_id, 10),
+      language: data.language,
+      condition: data.condition,
+      exchange_location_id: parseInt(data.exchange_location_id, 10),
+    };
+    
+    const success = await onAddBook(payload, selectedImages);
+
+    if (success) {
+      alert('Книга успешно добавлена!');
+      navigate('/home');
+    } else {
+      alert('Произошла ошибка при добавлении книги.');
     }
-  };
-
-  const removeTag = (tagToRemove) => {
-    const newTags = tags.filter(tag => tag !== tagToRemove);
-    setTags(newTags);
-    setValue('tags', newTags);
-  };
-
-  const handleFormSubmit = (data) => {
-    onAddBook(data);
-    alert('Книга успешно добавлена!');
-    navigate('/profile');
   };
 
   const FormInput = ({ id, label, required, placeholder, error, registerProps, ...props }) => (
@@ -116,6 +135,10 @@ export default function AddBookPage({ onAddBook }) {
     </div>
   );
 
+  if (isLoading) {
+    return <div className="p-8 text-center">Загрузка данных для формы...</div>;
+  }
+
   return (
     <div className="p-8">
       <div className="flex items-center gap-4 mb-6">
@@ -137,18 +160,24 @@ export default function AddBookPage({ onAddBook }) {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormInput id="title" label="Название книги" required placeholder="Введите название" error={errors.title} registerProps={register('title', { required: 'Название книги обязательно' })} />
-                <FormInput id="author" label="Автор" required placeholder="Введите имя автора" error={errors.author} registerProps={register('author', { required: 'Автор обязателен' })} />
-                <FormSelect id="genre" label="Жанр" required error={errors.genre} registerProps={register('genre', { required: 'Жанр обязателен' })}>
-                    <option value="">Выберите жанр</option>
-                    {genres.map(g => <option key={g} value={g}>{g}</option>)}
+                
+                <FormSelect id="author" label="Автор" required error={errors.author_id} registerProps={register('author_id', { required: 'Автор обязателен' })}>
+                    <option value="">Выберите автора</option>
+                    {authors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                 </FormSelect>
+
+                <FormSelect id="genre" label="Жанр" required error={errors.genre_id} registerProps={register('genre_id', { required: 'Жанр обязателен' })}>
+                    <option value="">Выберите жанр</option>
+                    {genres.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                </FormSelect>
+
                 <div className="space-y-1">
                    <label className="text-sm font-medium">Состояние книги *</label>
                    <div className="flex gap-6 pt-2">
-                     {['new', 'good', 'fair'].map(condition => (
+                     {['new', 'good', 'normal'].map(condition => (
                        <div key={condition} className="flex items-center space-x-2">
                          <input type="radio" id={condition} value={condition} {...register('condition')} className="w-4 h-4" defaultChecked={condition === 'good'} />
-                         <label htmlFor={condition}>{condition === 'new' ? 'Новая' : condition === 'good' ? 'Хорошее' : 'Удовлетворительное'}</label>
+                         <label htmlFor={condition}>{condition === 'new' ? 'Новая' : condition === 'good' ? 'Хорошее' : 'Нормальное'}</label>
                        </div>
                      ))}
                    </div>
@@ -157,6 +186,7 @@ export default function AddBookPage({ onAddBook }) {
               <FormTextarea id="description" label="Описание" placeholder="Опишите книгу, её состояние, особенности..." registerProps={register('description')} />
             </div>
           </div>
+          
           <div className="p-6 rounded-xl" style={{ backgroundColor: 'var(--md-sys-color-surface-container)' }}>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"><Camera /> Фотографии книги</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -177,35 +207,21 @@ export default function AddBookPage({ onAddBook }) {
                )}
             </div>
           </div>
+          
           <div className="p-6 rounded-xl" style={{ backgroundColor: 'var(--md-sys-color-surface-container)' }}>
              <h3 className="text-lg font-semibold mb-6">Дополнительная информация</h3>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormInput id="publisher" label="Издательство" placeholder="Название издательства" registerProps={register('publisher')} />
-                <FormInput id="year" label="Год издания" type="number" placeholder="2023" min="1500" max={new Date().getFullYear()} registerProps={register('year', { valueAsNumber: true })} />
                 <FormSelect id="language" label="Язык" registerProps={register('language')}>
-                  {['Русский', 'Английский', 'Другой'].map(lang => <option key={lang} value={lang}>{lang}</option>)}
+                  <option value="ru">Русский</option>
+                  <option value="en">Английский</option>
                 </FormSelect>
-                <FormSelect id="exchangeLocation" label="Точка обмена" required error={errors.exchangeLocation} registerProps={register('exchangeLocation', { required: 'Точка обмена обязательна' })}>
+                <FormSelect id="exchangeLocation" label="Точка обмена" required error={errors.exchange_location_id} registerProps={register('exchange_location_id', { required: 'Точка обмена обязательна' })}>
                   <option value="">Выберите точку обмена</option>
-                  {exchangeLocations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
+                  {exchangeLocations.map(loc => <option key={loc.id} value={loc.id}>{loc.title}</option>)}
                 </FormSelect>
-             </div>
-             <div className="mt-6">
-                <label className="text-sm font-medium">Теги (до 5 тегов)</label>
-                <div className="flex gap-2 mt-1">
-                    <input value={currentTag} onChange={(e) => setCurrentTag(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())} placeholder="Добавить тег" className="w-full p-2 rounded-lg border bg-transparent focus:outline-none focus:ring-2 border-[var(--md-sys-color-outline)] focus:border-[var(--md-sys-color-primary)]" style={{'--tw-ring-color': 'var(--md-sys-color-primary)'}} />
-                    <button type="button" onClick={addTag} disabled={!currentTag.trim() || tags.length >= 5} className="py-2 px-4 rounded-lg font-semibold whitespace-nowrap" style={{backgroundColor: 'var(--md-sys-color-secondary-container)', color: 'var(--md-sys-color-on-secondary-container)'}}>Добавить</button>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                    {tags.map(tag => (
-                        <span key={tag} className="flex items-center gap-1 text-sm px-2 py-1 rounded" style={{backgroundColor: 'var(--md-sys-color-surface-container-high)'}}>
-                            {tag}
-                            <button type="button" onClick={() => removeTag(tag)} className="ml-1 hover:text-red-400">&times;</button>
-                        </span>
-                    ))}
-                </div>
              </div>
            </div>
+          
           <div className="flex justify-end gap-4 pt-6">
             <button type="button" onClick={() => navigate(-1)} className="py-2 px-4 rounded-lg font-semibold" style={{backgroundColor: 'var(--md-sys-color-surface-container-high)'}}>Отмена</button>
             <button type="submit" disabled={isSubmitting} className="py-2 px-4 rounded-lg font-semibold flex items-center gap-2" style={{backgroundColor: 'var(--md-sys-color-primary)', color: 'var(--md-sys-color-on-primary)'}}>

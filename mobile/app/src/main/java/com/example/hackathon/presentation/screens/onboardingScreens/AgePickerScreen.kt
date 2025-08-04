@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.commandiron.wheel_picker_compose.WheelDatePicker
 import com.example.compose.PreviewTheme
+import com.example.hackathon.presentation.viewmodel.ProfileEvent
 import com.example.hackathon.presentation.viewmodel.ProfileViewModel
 
 // USES https://github.com/commandiron/WheelPickerCompose
@@ -46,7 +47,7 @@ fun AgePickerScreen(
                 contentAlignment = Alignment.Center
             ) {
                 WheelDatePicker { snappedDate ->
-                    viewModel.onBirthDateChange(newDate = snappedDate) // Вызываем метод из ProfileViewModel
+                    viewModel.onEvent(ProfileEvent.OnBirthDateChange(snappedDate))
                 }
             }
             Box(

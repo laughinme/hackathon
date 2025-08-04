@@ -50,7 +50,6 @@ class AuthViewModel @Inject constructor(
 
     fun onSignUpClicked() {
         viewModelScope.launch {
-            // Предполагаем, что у тебя есть поле для username
             val username = "some_username" // Возьми из соответствующего StateFlow
             registerUseCase(UserRegisterRequest(email.value, password.value, username))
                 .collect { result ->

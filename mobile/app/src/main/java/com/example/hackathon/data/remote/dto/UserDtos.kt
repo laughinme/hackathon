@@ -1,5 +1,6 @@
 package com.example.hackathon.data.remote.dto
 
+import com.example.hackathon.domain.model.UserProfile
 import com.google.gson.annotations.SerializedName
 
 /**
@@ -7,6 +8,12 @@ import com.google.gson.annotations.SerializedName
  * Соответствует схеме UserModel в Swagger.
  */
 data class UserModelDto(
+    @SerializedName("id")
+    val id: String,
+    @SerializedName("created_at")
+    val createdAt: String, // Формат "date-time"
+    @SerializedName("updated_at")
+    val updatedAt: String?, // Формат "date-time"
     @SerializedName("email")
     val email: String,
     @SerializedName("username")
@@ -17,10 +24,16 @@ data class UserModelDto(
     val bio: String?,
     @SerializedName("birth_date")
     val birthDate: String?, // Формат "date"
+    @SerializedName("age")
+    val age: Int?,
     @SerializedName("gender")
     val gender: String?, // "male", "female", "unknown"
-    @SerializedName("city_id")
-    val cityId: Int?,
+    @SerializedName("language")
+    val language: String?,
+    @SerializedName("favorite_genres")
+    val favoriteGenres: List<GenreModelDto>,
+    @SerializedName("city")
+    val city: CityModelDto?,
     @SerializedName("latitude")
     val latitude: Double?,
     @SerializedName("longitude")
@@ -28,7 +41,9 @@ data class UserModelDto(
     @SerializedName("is_onboarded")
     val isOnboarded: Boolean,
     @SerializedName("banned")
-    val isBanned: Boolean
+    val isBanned: Boolean,
+    @SerializedName("public")
+    val isPublic: Boolean
 )
 
 /**
@@ -43,15 +58,19 @@ data class UserPatchRequest(
     @SerializedName("bio")
     val bio: String? = null,
     @SerializedName("birth_date")
-    val birthDate: String? = null,
+    val birthDate: String? = null, // Формат "date"
     @SerializedName("gender")
-    val gender: String? = null,
+    val gender: String? = null, // "male", "female", "unknown"
+    @SerializedName("language")
+    val language: String? = null,
     @SerializedName("city_id")
     val cityId: Int? = null,
     @SerializedName("latitude")
     val latitude: Double? = null,
     @SerializedName("longitude")
-    val longitude: Double? = null
+    val longitude: Double? = null,
+    @SerializedName("public")
+    val isPublic: Boolean? = null
 )
 
 /**
@@ -63,3 +82,23 @@ data class GenresPatchRequest(
     val favoriteGenres: List<Int>
 )
 
+
+fun UserModelDto.toDomain(): UserProfile {
+    return UserProfile(
+        id = this.id,
+        email = this.email,
+        username = this.username,
+        avatarUrl = this.avatarUrl,
+        bio = this.bio,
+        age = this.age,
+        birthDate = this.birthDate,
+        gender = this.gender,
+        language = this.language,
+        favoriteGenres = this.favoriteGenres.map { it.toDomain() },
+        city = this.city?.toDomain(),
+        latitude = this.latitude,
+        longitude = this.longitude,
+        isOnboarded = this.isOnboarded,
+        isPublic = this.isPublic
+    )
+}

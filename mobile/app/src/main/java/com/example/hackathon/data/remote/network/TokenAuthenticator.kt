@@ -10,11 +10,17 @@ import javax.inject.Provider
 
 class TokenAuthenticator @Inject constructor(
     private val tokenManager: TokenManager,
-    // Используем Provider<T> для Hilt, чтобы разорвать циклическую зависимость
     private val tokenRefreshApiService: Provider<TokenRefreshApiService>
 ) : Authenticator {
 
     override fun authenticate(route: Route?, response: Response): Request? {
+        // Проверяем, не является ли запрос, вызвавший ошибку, запросом на выход
+        if (response.request.url.encodedPath.endsWith("/api/v1/auth/logout")) {
+            // Если да, то ошибка 401 ожидаема. Не пытаемся обновить токен.
+            // Просто возвращаем null, чтобы запрос не повторялся.
+            return null
+        }
+
         // Используем runBlocking, так как метод authenticate должен быть синхронным
         return runBlocking {
             // Получаем старый refresh token

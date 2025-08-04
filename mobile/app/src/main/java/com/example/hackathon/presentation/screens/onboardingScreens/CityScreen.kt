@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -29,79 +30,83 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.PreviewTheme
+import com.example.hackathon.domain.model.Resource
+import com.example.hackathon.presentation.viewmodel.ProfileEvent
 import com.example.hackathon.presentation.viewmodel.ProfileViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CityScreen(
-    viewModel: ProfileViewModel = hiltViewModel(), // Используем ProfileViewModel
+    viewModel: ProfileViewModel = hiltViewModel(),
     onNext: () -> Unit
 ) {
-    // TODO: Загрузить этот список из API
-    val cities = listOf("Новосибирск", "Москва", "Санкт-Петербург")
+    // Получаем актуальные состояния из ViewModel
+    val allCitiesState by viewModel.allCitiesState.collectAsStateWithLifecycle()
+    val selectedCityId by viewModel.selectedCityId.collectAsStateWithLifecycle()
     var expanded by remember { mutableStateOf(false) }
-    val selectedCity by viewModel.city.collectAsStateWithLifecycle()
+
+    // Находим имя выбранного города для отображения в поле
+    val selectedCityName = (allCitiesState as? Resource.Success)?.data?.find { it.id == selectedCityId }?.name ?: ""
 
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
+            modifier = Modifier.fillMaxWidth().weight(1f),
             contentAlignment = Alignment.Center
         ) {
-            Text("Choose your city", fontSize = 25.sp)
+            Text("Выберите ваш город", fontSize = 25.sp)
         }
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(horizontal = 24.dp),
+            modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 24.dp),
             contentAlignment = Alignment.Center
         ) {
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded }
-            ) {
-                TextField(
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth(),
-                    value = selectedCity,
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    cities.forEach { city ->
-                        DropdownMenuItem(
-                            text = { Text(city) },
-                            onClick = {
-                                viewModel.onCityChange(city)
-                                expanded = false
-                            }
+            // Обрабатываем состояния загрузки, ошибки и успеха
+            when (val state = allCitiesState) {
+                is Resource.Loading -> CircularProgressIndicator()
+                is Resource.Error -> Text(state.message ?: "Ошибка загрузки", color = MaterialTheme.colorScheme.error)
+                is Resource.Success -> {
+                    val cities = state.data ?: emptyList()
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = !expanded }
+                    ) {
+                        TextField(
+                            modifier = Modifier.menuAnchor().fillMaxWidth(),
+                            value = selectedCityName,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Город") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                         )
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            cities.forEach { city ->
+                                DropdownMenuItem(
+                                    text = { Text(city.name) },
+                                    onClick = {
+                                        // Отправляем правильное событие с объектом City
+                                        viewModel.onEvent(ProfileEvent.OnCityChange(city))
+                                        expanded = false
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(bottom = 60.dp),
+            modifier = Modifier.fillMaxWidth().weight(1f).padding(bottom = 60.dp),
             contentAlignment = Alignment.BottomCenter
         ) {
             Button(
-                modifier = Modifier
-                    .height(60.dp)
-                    .fillMaxWidth(0.9f),
-                onClick = onNext
+                modifier = Modifier.height(60.dp).fillMaxWidth(0.9f),
+                onClick = onNext,
+                enabled = selectedCityId != null // Кнопка активна только если город выбран
             ) {
-                Text("Continue", style = MaterialTheme.typography.headlineSmall)
+                Text("Продолжить", style = MaterialTheme.typography.headlineSmall)
             }
         }
     }
