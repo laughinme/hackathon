@@ -26,10 +26,10 @@ const UserHeader = () => {
       </div>
 
       <nav className="flex items-center ml-auto space-x-6">
-        <a href="#" className="flex items-center space-x-2" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
+        <Link to="/map" className="flex items-center space-x-2" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
           <Map size={20} />
           <span>Карта точек</span>
-        </a>
+        </Link>
         <a href="#" className="flex items-center space-x-2" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
           <Library size={20} />
           <span>Мои книги</span>

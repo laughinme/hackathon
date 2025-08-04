@@ -10,6 +10,7 @@ import HomePage from './components/pages/HomePage';
 import UserProfilePage from './components/pages/UserProfilePage';
 import AddBookPage from './components/pages/AddBookPage';
 import OnboardingPage from './components/pages/OnboardingPage';
+import MapPage from './components/pages/MapPage';
 import PrivateRoute from './components/layout/PrivateRoute';
 import apiProtected, { apiPublic, setAccessToken } from './api/axios';
 
@@ -187,6 +188,18 @@ export default function App() {
         <Route path="/home" element={<PrivateRoute><div className="flex flex-col min-h-screen"><UserHeader /><main className="flex-1 overflow-auto"><HomePage books={allBooks} /></main></div></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><div className="flex flex-col min-h-screen"><UserHeader /><main className="flex-1 overflow-auto"><UserProfilePage allBooks={allBooks} /></main></div></PrivateRoute>} />
         <Route path="/add-book" element={<PrivateRoute><div className="flex flex-col min-h-screen"><UserHeader /><main className="flex-1 overflow-auto"><AddBookPage onAddBook={addBook} /></main></div></PrivateRoute>} />
+        
+        {/* --- ИЗМЕНЕНИЕ ЗДЕСЬ --- */}
+        <Route path="/map" element={
+          <PrivateRoute>
+            <div className="flex flex-col min-h-screen">
+              <UserHeader />
+              <main className="flex-1 overflow-auto relative">
+                <MapPage />
+              </main>
+            </div>
+          </PrivateRoute>} 
+        />
         
       </Routes>
     </AuthContext.Provider>
