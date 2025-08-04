@@ -17,7 +17,7 @@ from database.relational_db import (
     Author,
     Genre,
 )
-from domain.books import BookCreate
+from domain.books import BookCreate, BookPatch
 
 settings = Settings() # type: ignore
 logger = logging.getLogger(__name__)
@@ -105,8 +105,9 @@ class BookService:
     async def list_books(self, user: User, limit: int, filter: bool = False):
         if filter:
             lat, lon = user.latitude, user.longitude
-            if lat is None or lon is None:
-                raise HTTPException(412, detail='You should complete onboarding first')
+            # NOTE: we should reconsider onboarding policy
+            # if lat is None or lon is None:
+            #     raise HTTPException(412, detail='You should complete onboarding first')
             
             books = await self.books_repo.recommended_books(user, lat, lon, limit)
         else:
@@ -116,3 +117,23 @@ class BookService:
     
     async def list_user_books(self, user: User, limit: int):
         return await self.books_repo.list_user_books(user.id, limit)
+
+    async def edit_book(self, payload: BookPatch, book_id: UUID, user: User):
+        data = payload.model_dump(exclude_none=True)
+        
+        # Not implemented yet
+        # if (is_available := data.get('is_available')) is not None:
+        #     if not is_available:
+        #         data['unavailable_manual'] = True
+        
+        book = await self.get_book(book_id)
+        if book is None:
+            raise HTTPException(404, detail='Book with this id not found')
+        if book.owner_id != user.id:
+            raise HTTPException(403, detail='You dont have access to this resource')
+            
+        for field, value in data.items():
+            setattr(book, field, value)
+            
+        await self.uow.session.refresh(book)
+        return book

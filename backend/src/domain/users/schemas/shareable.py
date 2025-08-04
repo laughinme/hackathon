@@ -7,7 +7,7 @@ from ...books import GenreModel
 from ...geo import CityModel
 
 
-class UserShare(BaseModel):
+class UserNearby(BaseModel):
     """
     User schema making possible to share other users public profile data.
     It is used only for nearby users request
@@ -21,7 +21,7 @@ class UserShare(BaseModel):
     gender: Gender | None = Field(None)
     language: Annotated[str, constr(min_length=2, max_length=2)] | None = Field(None)
     
-    favorite_genres: list[GenreModel] = Field(default_factory=list)
+    favorite_genres: list[GenreModel] = Field(...)
     
     city: CityModel = Field(...)
     
@@ -43,6 +43,6 @@ class UserShare(BaseModel):
     gender: Gender | None = Field(None)
     language: Annotated[str, constr(min_length=2, max_length=2)] | None = Field(None)
     
-    favorite_genres: list[GenreModel] = Field(default_factory=list)
+    favorite_genres: list[GenreModel] = Field(...)
     
-    city: CityModel = Field(...)
+    city: CityModel | None = Field(None)

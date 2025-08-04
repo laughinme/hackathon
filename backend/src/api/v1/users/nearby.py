@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
 from database.relational_db import User
-from domain.users import UserShare
+from domain.users import UserNearby
 from core.config import Settings
 from core.security import auth_user
 from service.users import UserService, get_user_service
@@ -13,7 +13,7 @@ config = Settings() # pyright: ignore[reportCallIssue]
 
 @router.get(
     path='/nearby',
-    response_model=list[UserShare],
+    response_model=list[UserNearby],
     summary='Get nearby users (not tested yet)'
 )
 async def nearby_users(

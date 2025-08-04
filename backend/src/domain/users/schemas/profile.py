@@ -22,7 +22,7 @@ class UserModel(TimestampModel):
     gender: Gender | None = Field(None)
     language: Annotated[str, constr(min_length=2, max_length=2)] | None = Field(None)
     
-    favorite_genres: list[GenreModel] = Field(default_factory=list)
+    favorite_genres: list[GenreModel] = Field(...)
     
     city: CityModel | None = Field(None)
     

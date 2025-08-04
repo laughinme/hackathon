@@ -1,1 +1,1 @@
-from .exchanges import ExchangeCreate, ExchangeModel
+from .exchanges import ExchangeCreate, ExchangeModel, ExchangeEdit, ExchangeCancel

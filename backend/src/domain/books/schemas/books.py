@@ -1,5 +1,6 @@
 from uuid import UUID
-from pydantic import BaseModel, Field
+from typing import Annotated
+from pydantic import BaseModel, Field, constr
 
 from domain.common import TimestampModel
 from .authors import AuthorModel
@@ -40,3 +41,13 @@ class BookCreate(BaseModel):
 
     exchange_location_id: int = Field(...)
     is_available: bool = Field(True)
+
+
+class BookPatch(BookCreate):
+    title: str | None = Field(None)
+    author_id: int | None = Field(None)
+    genre_id: int | None = Field(None)
+    language: Annotated[str, constr(min_length=2, max_length=2)] | None = Field(None)
+    condition: Condition | None = Field(None)
+    exchange_location_id: int | None = Field(None)
+    is_available: bool | None = Field(None)

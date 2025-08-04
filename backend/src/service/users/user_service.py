@@ -52,6 +52,8 @@ class UserService:
         for field, value in data.items():
             setattr(user, field, value)
             
+        await self.uow.session.refresh(user)
+            
     async def set_genres(self, new_ids: set[int], user: User):
         genres = await self.genres_repo.get_by_ids(new_ids)
         if len(genres) != len(new_ids):
