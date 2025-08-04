@@ -21,4 +21,10 @@ interface BookRepository {
      * Получает список всех доступных жанров.
      */
     fun getGenres(): Flow<Resource<List<Genre>>>
+
+    /**
+     * Получает список книг "для вас".
+     * @param limit Ограничение на количество книг.
+     */
+    fun getBooksForYou(limit: Int? = null): Flow<Resource<List<Book>>>
 }

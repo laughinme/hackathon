@@ -87,4 +87,20 @@ class BookRepositoryImpl @Inject constructor(
             emit(Resource.Error(e.message ?: "An unknown error occurred"))
         }
     }
+
+    override fun getBooksForYou(limit: Int?): Flow<Resource<List<Book>>> = flow {
+        emit(Resource.Loading())
+        try {
+            val response = apiService.getBooksForYou(limit = limit)
+            if (response.isSuccessful) {
+                val booksDto = response.body() ?: emptyList()
+                emit(Resource.Success(booksDto.map { it.toDomain() }))
+            } else {
+                emit(Resource.Error("Failed to fetch books for you. Code: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emit(Resource.Error(e.message ?: "An unknown error occurred"))
+        }
+    }
 }

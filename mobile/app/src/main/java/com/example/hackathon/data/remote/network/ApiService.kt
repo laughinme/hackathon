@@ -145,6 +145,15 @@ interface ApiService {
      */
     @GET("/api/v1/geo/exchange_locations/nearest")
     suspend fun getNearestExchangePoint(): Response<ExchangeLocationDto>
+
+    /**
+     * Получение списка книг "для вас".
+     * Требуется токен доступа.
+     * @param limit Ограничение количества книг.
+     * @return Список моделей книг.
+     */
+    @GET("/api/v1/books/for_you")
+    suspend fun getBooksForYou(@Query("limit") limit: Int? = null): Response<List<BookModelDto>>
 }
 
 
