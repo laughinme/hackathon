@@ -6,6 +6,7 @@ from domain.books import BookModel
 from core.config import Settings
 from core.security import auth_user
 from service.books import BookService, get_books_service
+from database.relational_db import User
 
 router = APIRouter()
 config = Settings() # pyright: ignore[reportCallIssue]
@@ -15,11 +16,10 @@ config = Settings() # pyright: ignore[reportCallIssue]
     path='/',
     response_model=BookModel,
     summary='Get specific book by its id',
-    responses={404: {'description': 'Book with this `book_id` not found'}},
 )
 async def get_book(
     book_id: Annotated[UUID, Path(...)],
-    # _: Annotated[User, Depends(auth_user)],
+    _: Annotated[User, Depends(auth_user)],
     svc: Annotated[BookService, Depends(get_books_service)],
 ):
     book = await svc.get_book(book_id)

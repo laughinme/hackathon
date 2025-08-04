@@ -7,7 +7,8 @@ def get_specific_book_router() -> APIRouter:
     from .interactions import router as interactions_router
     
     router = APIRouter(
-        prefix='/{book_id}'
+        prefix='/{book_id}',
+        responses={404: {'description': 'Book with this `book_id` not found.'}}
     )
 
     router.include_router(info_router)

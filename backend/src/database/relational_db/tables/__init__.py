@@ -5,3 +5,4 @@ from .books import *
 from .geography import *
 from .statistics import *
 from .recommendations import *
+from .exchanges import *

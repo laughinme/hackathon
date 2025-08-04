@@ -39,3 +39,6 @@ class Book(TimestampMixin, Base):
     author: Mapped['Author'] = relationship(lazy='selectin') # type: ignore
     genre: Mapped['Genre'] = relationship(lazy='selectin') # type: ignore
     exchange_location: Mapped['ExchangeLocation'] = relationship(lazy='selectin') # type: ignore
+    exchange: Mapped['Exchange'] = relationship( # type: ignore
+        back_populates='book', uselist=False, lazy='selectin'
+    )
