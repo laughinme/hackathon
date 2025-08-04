@@ -2,12 +2,15 @@ package com.example.hackathon.data.repository.impl
 
 import android.content.Context
 import androidx.core.net.toUri
+import com.example.hackathon.data.remote.dto.ExchangeCreateRequest
 import com.example.hackathon.data.remote.dto.toDomain
 import com.example.hackathon.data.remote.dto.toRequest
 import com.example.hackathon.data.remote.network.ApiService
 import com.example.hackathon.domain.model.Book
 import com.example.hackathon.domain.model.CreateBookParams
+import com.example.hackathon.domain.model.Exchange
 import com.example.hackathon.domain.model.Genre
+import com.example.hackathon.domain.model.ReserveBookParams
 import com.example.hackathon.domain.model.Resource
 import com.example.hackathon.domain.repository.BookRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -101,6 +104,69 @@ class BookRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             e.printStackTrace()
             emit(Resource.Error(e.message ?: "An unknown error occurred"))
+        }
+    }
+
+    /**
+     * Реализация метода для записи клика по книге.
+     */
+    override fun recordClick(bookId: String): Flow<Resource<Unit>> = flow {
+        emit(Resource.Loading())
+        try {
+            val response = apiService.recordClick(bookId)
+            if (response.isSuccessful) {
+                emit(Resource.Success(Unit))
+            } else {
+                emit(Resource.Error("Failed to record click. Code: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emit(Resource.Error(e.message ?: "An unknown error occurred during click recording"))
+        }
+    }
+
+    /**
+     * Реализация метода для лайка книги.
+     */
+    override fun likeBook(bookId: String): Flow<Resource<Unit>> = flow {
+        emit(Resource.Loading())
+        try {
+            val response = apiService.likeBook(bookId)
+            if (response.isSuccessful) {
+                emit(Resource.Success(Unit))
+            } else {
+                emit(Resource.Error("Failed to like book. Code: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emit(Resource.Error(e.message ?: "An unknown error occurred during like"))
+        }
+    }
+
+    /**
+     * Реализация метода для резервирования книги.
+     */
+    override fun reserveBook(params: ReserveBookParams): Flow<Resource<Exchange>> = flow {
+        emit(Resource.Loading())
+        try {
+            val request = ExchangeCreateRequest(
+                meetingTime = params.meetingTime,
+                comment = params.comment
+            )
+            val response = apiService.reserveBook(params.bookId, request)
+            if (response.isSuccessful) {
+                val exchangeDto = response.body()
+                if (exchangeDto != null) {
+                    emit(Resource.Success(exchangeDto.toDomain()))
+                } else {
+                    emit(Resource.Error("Empty response body after reserving book"))
+                }
+            } else {
+                emit(Resource.Error("Failed to reserve book. Code: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emit(Resource.Error(e.message ?: "An unknown error occurred during reservation"))
         }
     }
 }

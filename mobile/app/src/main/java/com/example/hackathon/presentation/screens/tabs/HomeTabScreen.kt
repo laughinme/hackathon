@@ -1,5 +1,6 @@
 package com.example.hackathon.presentation.screens.tabs
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,6 +14,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +23,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -29,6 +32,7 @@ import com.example.hackathon.domain.model.Resource
 import com.example.hackathon.presentation.components.BookCard
 import com.example.hackathon.presentation.components.BookDetailsBottomSheet
 import com.example.hackathon.presentation.viewmodel.HomePageViewModel
+import com.example.hackathon.presentation.viewmodel.InteractionEvent
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,11 +40,20 @@ import kotlinx.coroutines.launch
 fun HomeTabScreen(viewModel: HomePageViewModel = hiltViewModel()) {
 
     val booksForYouState by viewModel.booksForYouState.collectAsState()
+    val selectedBook by viewModel.selectedBook.collectAsState()
+    val interactionEvent by viewModel.interactionEvent.collectAsState()
+    val context = LocalContext.current
 
-    // Состояние для управления bottom sheet
-    var selectedBook by remember { mutableStateOf<Book?>(null) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope = rememberCoroutineScope()
+    // Обработка одноразовых событий (Toast)
+    LaunchedEffect(interactionEvent) {
+        when (val event = interactionEvent) {
+            is InteractionEvent.ShowToast -> {
+                Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                viewModel.onInteractionEventConsumed() // Сбрасываем событие
+            }
+            null -> {}
+        }
+    }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         when (val state = booksForYouState) {
@@ -71,8 +84,7 @@ fun HomeTabScreen(viewModel: HomePageViewModel = hiltViewModel()) {
                             BookCard(
                                 book = book,
                                 onItemClick = {
-                                    // При клике обновляем выбранную книгу
-                                    selectedBook = book
+                                    viewModel.onBookCardClicked(book)
                                 }
                             )
                         }
@@ -91,17 +103,16 @@ fun HomeTabScreen(viewModel: HomePageViewModel = hiltViewModel()) {
     }
 
     // Показываем BottomSheet, если книга выбрана
-    if (selectedBook != null) {
+    val currentSelectedBook = selectedBook
+    if (currentSelectedBook != null) {
         BookDetailsBottomSheet(
-            book = selectedBook!!,
-            sheetState = sheetState,
-            onDismiss = {
-                // Скрываем sheet и сбрасываем книгу
-                scope.launch { sheetState.hide() }.invokeOnCompletion {
-                    selectedBook = null
-                }
-            }
+            book = currentSelectedBook,
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            onDismiss = { viewModel.onBottomSheetDismissed() },
+            onLikeClick = { viewModel.likeSelectedBook() },
+            onReserveClick = { viewModel.reserveSelectedBook() }
         )
     }
 }
+
 

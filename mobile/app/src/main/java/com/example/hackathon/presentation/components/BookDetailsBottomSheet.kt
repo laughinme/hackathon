@@ -1,6 +1,8 @@
 package com.example.hackathon.presentation.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,11 +11,18 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -46,21 +55,22 @@ fun BookDetailsBottomSheet(
     book: Book,
     sheetState: SheetState,
     onDismiss: () -> Unit,
+    onLikeClick: () -> Unit,
+    onReserveClick: () -> Unit
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         contentWindowInsets = { WindowInsets(0) }
     ) {
-        // LazyColumn для прокручиваемого контента
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .navigationBarsPadding() // Добавляем паддинг для системной навигации
+                .navigationBarsPadding()
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Обложка книги
+            // ... (существующий код для отображения информации о книге)
             item {
                 AsyncImage(
                     model = book.photoUrls.firstOrNull(),
@@ -74,8 +84,6 @@ fun BookDetailsBottomSheet(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
-
-            // Название и автор
             item {
                 Text(
                     text = book.title,
@@ -91,54 +99,57 @@ fun BookDetailsBottomSheet(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
-
-            // Описание
             if (!book.description.isNullOrBlank()) {
-                item {
-                    InfoRow(label = "Описание", value = book.description)
-                }
+                item { InfoRow(label = "Описание", value = book.description) }
             }
-
-            // Детали книги
             item { InfoRow(label = "Жанр", value = book.genre.name) }
             item { InfoRow(label = "Язык", value = book.language) }
             if (book.pages != null) {
                 item { InfoRow(label = "Количество страниц", value = book.pages.toString()) }
             }
             item { InfoRow(label = "Состояние", value = book.condition.name) }
-
-            // Условия обмена
             if (!book.extraTerms.isNullOrBlank()) {
-                item {
-                    InfoRow(label = "Условия обмена", value = book.extraTerms)
-                }
+                item { InfoRow(label = "Условия обмена", value = book.extraTerms) }
             }
-
-            // Место обмена
             item {
                 InfoRow(
                     label = "Место обмена",
                     value = "${book.exchangeLocation.city.name}, ${book.exchangeLocation.address}"
                 )
             }
+            val formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+            item { InfoRow(label = "Дата добавления", value = book.createdAt.format(formatter)) }
 
-            // Дата добавления
+            // Кнопки действий
             item {
-                val formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-                InfoRow(label = "Дата добавления", value = book.createdAt.format(formatter))
-            }
-
-            // Добавляем отступ внизу
-            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    TextButton(
+                        onClick = onLikeClick,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.Favorite, contentDescription = "Like")
+                        Spacer(modifier = Modifier.height(ButtonDefaults.IconSpacing))
+                        Text("В избранное")
+                    }
+                    Button(
+                        onClick = onReserveClick,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.ExitToApp, contentDescription = "Reserve")
+                        Spacer(modifier = Modifier.height(ButtonDefaults.IconSpacing))
+                        Text("Обменять")
+                    }
+                }
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
 }
 
-/**
- * Вспомогательный Composable для отображения строки "метка: значение".
- */
 @Composable
 private fun InfoRow(label: String, value: String) {
     Column(modifier = Modifier
@@ -155,6 +166,7 @@ private fun InfoRow(label: String, value: String) {
         )
     }
 }
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -190,7 +202,9 @@ fun BookDetailsBottomSheetPreview() {
         BookDetailsBottomSheet(
             book = book,
             sheetState = rememberModalBottomSheetState(),
-            onDismiss = {}
+            onDismiss = {},
+            onLikeClick = {},
+            onReserveClick = {}
         )
     }
 }
