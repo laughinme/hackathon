@@ -1,0 +1,14 @@
+from enum import Enum
+
+
+class ExchangeProgress(Enum):
+    """Represents the stage of a book exchange process"""
+    CREATED = "created"
+    ACCEPTED = "accepted"
+    DECLINED = "declined"
+    FINISHED = "finished"
+    CANCELED = "canceled"
+
+class ActiveStatuses(Enum):
+    CREATED = "created"
+    ACCEPTED = "accepted"

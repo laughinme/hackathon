@@ -1,2 +1,2 @@
 from .profile import UserModel, UserPatch, GenresPatch
-from .shareable import UserShare
+from .shareable import UserShare, UserShare

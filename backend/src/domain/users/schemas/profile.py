@@ -44,6 +44,12 @@ class UserPatch(BaseModel):
     
     city_id: int | None = Field(None)
     
+    favorite_genres: set[int] | None = Field(
+        None, 
+        description='По многочисленным просьбам михлапа я добавил жанры в patch. '\
+                    'После того как жанры были установлены, их нельзя поменять на новые.'
+    )
+    
     latitude: Annotated[float, confloat(ge=-90, le=90)] | None = Field(None)
     longitude: Annotated[float, confloat(ge=-180, le=180)] | None = Field(None)
     
@@ -58,7 +64,7 @@ class UserPatch(BaseModel):
 
 class GenresPatch(BaseModel):
     favorite_genres: set[int] = Field(
-        ..., description='List of genres ids', min_length=1
+        ..., description='List of genre ids', min_length=1
     )
     
     @field_validator('favorite_genres')

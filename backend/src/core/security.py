@@ -9,7 +9,6 @@ from service.users import UserService, get_user_service
 
 
 security = HTTPBearer(
-    # auto_error=False,
     description='Access token must be passed as Bearer to authorize request'
 )
 
@@ -19,9 +18,6 @@ async def auth_user(
     token_svc: Annotated[TokenService, Depends(get_token_service)],
     user_svc: Annotated[UserService, Depends(get_user_service)],
 ) -> User:
-    # if creds is None:
-    #     raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not Authorized")
-    
     payload = await token_svc.verify_access(creds.credentials)
     if payload is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Bad access token passed")
@@ -30,6 +26,8 @@ async def auth_user(
     user = await user_svc.get_user(user_id)
     if user is None:
         raise HTTPException(401, detail="Not Authorized")
+    if user.banned:
+        raise HTTPException(403, detail="Your account is banned, contact support: laughinmee@gmail.com")
     
     return user
 
