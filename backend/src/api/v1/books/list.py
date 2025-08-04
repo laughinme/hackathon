@@ -23,3 +23,17 @@ async def get_books(
 ):
     books = await svc.list_books(user, limit)
     return books
+
+
+@router.get(
+    path='/my',
+    response_model=list[BookModel],
+    summary='List all books that belong to the current user',
+)
+async def get_my_books(
+    user: Annotated[User, Depends(auth_user)],
+    svc: Annotated[BookService, Depends(get_books_service)],
+    limit: int = Query(50, description='Number of books to return'),
+):
+    books = await svc.list_user_books(user, limit)
+    return books

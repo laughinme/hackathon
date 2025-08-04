@@ -113,3 +113,6 @@ class BookService:
             books = await self.books_repo.list_books()
             
         return books
+    
+    async def list_user_books(self, user: User, limit: int):
+        return await self.books_repo.list_user_books(user.id, limit)

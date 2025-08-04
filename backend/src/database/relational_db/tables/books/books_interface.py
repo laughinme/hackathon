@@ -72,5 +72,12 @@ class BooksInterface:
         books = await self.session.scalars(
             select(Book)
         )
-        
+        return list(books.all())
+
+    async def list_user_books(self, user_id: UUID, limit: int) -> list[Book]:
+        books = await self.session.scalars(
+            select(Book)
+            .where(Book.owner_id == user_id)
+            .limit(limit)
+        )
         return list(books.all())
