@@ -46,17 +46,19 @@ class UserService:
             if await self.cities_repo.get_by_id(city_id) is None:
                 raise IncorrectCityId
         
+        if (genres := data.pop('favorite_genres', None)) is not None:
+            await self.set_genres(genres, user)
+        
         for field, value in data.items():
             setattr(user, field, value)
             
-    async def set_genres(self, payload: GenresPatch, user: User):
-        new_ids = payload.favorite_genres
+    async def set_genres(self, new_ids: set[int], user: User):
         genres = await self.genres_repo.get_by_ids(new_ids)
         if len(genres) != len(new_ids):
             raise IncorrectGenreId
         
         current_ids = [pair.genre_id for pair in await self.ug_repo.list_ids(user.id)]
-        if current_ids:
+        if current_ids and current_ids != list(new_ids):
             raise HTTPException(400, detail='IDs cannot be changed after being set.')
         
         await self.ug_repo.bulk_add(new_ids, user.id)

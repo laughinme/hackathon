@@ -5,7 +5,8 @@ from database.relational_db import (
     UoW,
     BookEventsInterface,
     UserInterestInterface,
-    BooksInterface
+    BooksInterface,
+    BookStatsInterface,
 )
 from .statistics_service import StatService
 
@@ -16,5 +17,6 @@ async def get_stats_service(
     bv_repo = BookEventsInterface(uow.session)
     ui_repo = UserInterestInterface(uow.session)
     book_repo = BooksInterface(uow.session)
+    bs_repo = BookStatsInterface(uow.session)
     
-    return StatService(uow, bv_repo, ui_repo, book_repo)
+    return StatService(uow, bv_repo, ui_repo, book_repo, bs_repo)
