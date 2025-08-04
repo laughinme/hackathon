@@ -37,6 +37,9 @@ class MapViewModel @Inject constructor(
     private val _selectecLocationInfo = MutableStateFlow<ExchangeLocation?>(null)
     val selectedLocationInfo = _selectecLocationInfo.asStateFlow()
 
+    private val _pickedLocation = MutableStateFlow<String?>(null)
+    val pickedLocation = _pickedLocation.asStateFlow()
+
     private val _currentLocation = MutableStateFlow<Location?>(null)
     val currentLocation = _currentLocation.asStateFlow()
 
@@ -125,5 +128,9 @@ class MapViewModel @Inject constructor(
 
     fun dismissLocationInfo() {
         _selectecLocationInfo.value = null
+    }
+
+    fun onPickedLocation() {
+        _pickedLocation.value = _selectecLocationInfo.value?.title
     }
 }
