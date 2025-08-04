@@ -1,6 +1,7 @@
 from uuid import UUID
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.dialects.postgresql import insert
 
 from domain.statistics import Interaction
 from .book_events_table import BookEvent
@@ -19,10 +20,39 @@ class BookEventsInterface:
         book_id: UUID,
         user_id: UUID, 
         interaction: Interaction
-    ):
-        event = BookEvent(
-            book_id=book_id,
-            user_id=user_id,
-            interaction=interaction
+    ) -> int | None:
+        stmt = (
+            insert(BookEvent)
+            .values(book_id=book_id, user_id=user_id, interaction=interaction)
+            .on_conflict_do_nothing(
+                index_elements=("book_id", "user_id"),
+                index_where=BookEvent.interaction == Interaction.LIKE
+            )
+            .returning(BookEvent.id)
         )
-        self.add(event)
+        result = await self.session.execute(stmt)
+        event_id = result.scalar()
+        
+        if event_id is None:
+            del_stmt = delete(BookEvent).where(
+                BookEvent.book_id == book_id,
+                BookEvent.user_id == user_id,
+                BookEvent.interaction == Interaction.LIKE
+            )
+            await self.session.execute(del_stmt)
+        return event_id
+        
+    async def by_book_user(
+        self, 
+        book_id: UUID, 
+        user_id: UUID,
+        interaction: Interaction
+    ) -> BookEvent | None:
+        return await self.session.scalar(
+            select(BookEvent)
+            .where(
+                BookEvent.book_id == book_id,
+                BookEvent.user_id == user_id,
+                BookEvent.interaction == interaction
+            )
+        )
