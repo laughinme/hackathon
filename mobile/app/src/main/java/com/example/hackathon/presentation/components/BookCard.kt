@@ -2,11 +2,18 @@ package com.example.hackathon.presentation.components
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,12 +28,20 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.compose.PreviewTheme
 import com.example.hackathon.R
-import com.example.hackathon.domain.model.*
+import com.example.hackathon.domain.model.Author
+import com.example.hackathon.domain.model.Book
+import com.example.hackathon.domain.model.BookCondition
+import com.example.hackathon.domain.model.City
+import com.example.hackathon.domain.model.ExchangeLocation
+import com.example.hackathon.domain.model.Genre
 import java.time.OffsetDateTime
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookCard(book: Book, onItemClick : () -> Unit) {
+    // Оборачиваем Card в onClick, чтобы обрабатывать нажатия
     Card(
+        onClick = onItemClick, // <-- Вот это изменение
         modifier = Modifier
             .fillMaxWidth()
             .height(160.dp)
@@ -46,8 +61,8 @@ fun BookCard(book: Book, onItemClick : () -> Unit) {
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentScale = ContentScale.Crop,
-                placeholder = painterResource(id = com.example.hackathon.R.drawable.ic_launcher_background), // Замени на свою заглушку
-                error = painterResource(id = R.drawable.ic_launcher_background) // Замени на свою заглушку
+                placeholder = painterResource(id = R.drawable.ic_launcher_background),
+                error = painterResource(id = R.drawable.ic_launcher_background)
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column(
