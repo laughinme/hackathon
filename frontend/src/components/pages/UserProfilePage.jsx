@@ -1,22 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star, Calendar, MapPin, Edit, Shield, Trophy, Clock, Users, Book as BookIcon, Plus } from 'lucide-react';
 import BookCard from '../common/BookCard';
+import { AuthContext } from '../../App';
 
 export default function UserProfilePage({ allBooks }) {
   const navigate = useNavigate();
+  const { currentUser } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState('books');
 
   const user = {
-    id: '1',
-    name: 'Анна Козлова',
-    avatar: 'https://placehold.co/120x120/DBC66E/3A3000?text=A',
+    // === ДАННЫЕ С БЭКЕНДА ===
+    name: currentUser?.username || 'Загрузка...',
+    avatar: currentUser?.avatar_url || 'https://placehold.co/120x120/DBC66E/3A3000?text=?',
+    bio: currentUser?.bio || 'Информация о себе не заполнена.',
+    
+    // === ДЕМОНСТРАЦИОННЫЕ ДАННЫЕ ===
+    id: currentUser?.id || '1',
     verified: true,
     rating: 4.9,
     reviewsCount: 127,
     memberSince: '2022-03-15',
     location: 'Москва, Россия',
-    bio: 'Заядлый читатель с 20-летним стажем. Люблю классическую литературу, современную прозу и научно-популярные книги.',
     stats: {
       totalBooks: 45, 
       activeBooks: 12,
@@ -32,7 +37,6 @@ export default function UserProfilePage({ allBooks }) {
     ]
   };
 
-  
   const userBooks = allBooks.filter(book => book.owner.name === 'Анна К.');
 
   const exchangeHistory = [
