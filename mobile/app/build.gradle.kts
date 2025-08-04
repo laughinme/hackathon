@@ -82,6 +82,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.coil.compose)
+    implementation(libs.accompanist.permissions)
     // DI
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
