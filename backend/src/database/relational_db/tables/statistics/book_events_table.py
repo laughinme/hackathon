@@ -1,6 +1,6 @@
 from uuid import UUID
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import Uuid, ForeignKey, Integer
+from sqlalchemy import Uuid, ForeignKey, Integer, Index, text
 from sqlalchemy.dialects.postgresql import ENUM
 
 from domain.statistics import Interaction
@@ -21,3 +21,13 @@ class BookEvent(CreatedAtMixin, Base):
     )
     
     interaction: Mapped[Interaction] = mapped_column(ENUM(Interaction), nullable=False)
+    
+    __table_args__ = (
+        Index(
+            'uix_book_event_like',
+            'book_id',
+            'user_id',
+            unique=True,
+            postgresql_where=text("interaction = 'like'"),
+        ),
+    )

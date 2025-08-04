@@ -18,13 +18,13 @@ class StatService:
     def __init__(
         self,
         uow: UoW,
-        bv_repo: BookEventsInterface,
+        be_repo: BookEventsInterface,
         ui_repo: UserInterestInterface,
         book_repo: BooksInterface,
         bs_repo: BookStatsInterface,
     ):
         self.uow = uow
-        self.bv_repo = bv_repo
+        self.be_repo = be_repo
         self.ui_repo = ui_repo
         self.book_repo = book_repo
         self.bs_repo = bs_repo
@@ -44,11 +44,13 @@ class StatService:
         book = await self.book_repo.by_id(book_id)
         if book is None:
             raise HTTPException(404, 'Book with this id not found')
-            
-        await self.ui_repo.edit_coef(event_coef[interaction], book.genre_id, user.id)   
         
-        await self.bv_repo.record_event(book_id, user.id, interaction)
-        await self.bs_repo.update_book_interaction(book_id, interaction)
+        event_id = await self.be_repo.record_event(book_id, user.id, interaction)
+        if event_id is None:
+            await self.ui_repo.edit_coef(-event_coef[interaction], book.genre_id, user.id)  
+        else:
+            await self.ui_repo.edit_coef(event_coef[interaction], book.genre_id, user.id)  
+            await self.bs_repo.update_book_interaction(book_id, interaction)
 
     async def set_interests(self, genre_ids: set[int], user: User):
         coef = 5 # Adjustable
