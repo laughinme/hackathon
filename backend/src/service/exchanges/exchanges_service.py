@@ -57,3 +57,21 @@ class ExchangeService:
             ['book', 'exchange_location', 'owner', 'requester']
         )
         return exchange
+    
+    async def list_requested(
+        self, 
+        user: User, 
+        only_active: bool = True, 
+        limit: int = 50
+    ):
+        exchanges = await self.ex_repo.by_requester(user.id, only_active, limit)
+        return exchanges
+
+    async def list_owned(
+        self, 
+        user: User, 
+        only_active: bool = True, 
+        limit: int = 50
+    ):
+        exchanges = await self.ex_repo.by_owner(user.id, only_active, limit)
+        return exchanges
