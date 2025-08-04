@@ -62,12 +62,11 @@ import com.example.hackathon.presentation.components.Map
 import com.example.hackathon.presentation.viewmodel.AddBookEvent
 import com.example.hackathon.presentation.viewmodel.AddBookViewModel
 import com.example.hackathon.presentation.viewmodel.MapViewModel
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import kotlinx.coroutines.launch
 
 const val ADDBOOK_SCREEN_TAG = "AddBookScreen"
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddBookScreen(
     viewModel: AddBookViewModel = hiltViewModel(),
