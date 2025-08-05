@@ -43,8 +43,8 @@ class BookEventsInterface:
         return event_id
         
     async def by_book_user(
-        self, 
-        book_id: UUID, 
+        self,
+        book_id: UUID,
         user_id: UUID,
         interaction: Interaction
     ) -> BookEvent | None:
@@ -56,3 +56,18 @@ class BookEventsInterface:
                 BookEvent.interaction == interaction
             )
         )
+
+    async def list_by_user_books(
+        self,
+        book_ids: list[UUID],
+        user_id: UUID,
+    ) -> list[BookEvent]:
+        if not book_ids:
+            return []
+        events = await self.session.scalars(
+            select(BookEvent).where(
+                BookEvent.book_id.in_(book_ids),
+                BookEvent.user_id == user_id,
+            )
+        )
+        return list(events.all())

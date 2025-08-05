@@ -19,10 +19,10 @@ config = Settings() # pyright: ignore[reportCallIssue]
 )
 async def get_book(
     book_id: Annotated[UUID, Path(...)],
-    _: Annotated[User, Depends(auth_user)],
+    user: Annotated[User, Depends(auth_user)],
     svc: Annotated[BookService, Depends(get_books_service)],
 ):
-    book = await svc.get_book(book_id)
+    book = await svc.get_book(book_id, user)
     if book is None:
         raise HTTPException(404, detail='Book with this `book_id` not found')
     

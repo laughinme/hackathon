@@ -16,8 +16,10 @@ from database.relational_db import (
     AuthorsInterface,
     Author,
     Genre,
+    BookEventsInterface,
 )
 from domain.books import BookCreate, BookPatch
+from domain.statistics import Interaction
 
 settings = Settings() # type: ignore
 logger = logging.getLogger(__name__)
@@ -29,12 +31,14 @@ class BookService:
         genre_repo: GenresInterface,
         books_repo: BooksInterface,
         authors_repo: AuthorsInterface,
+        events_repo: BookEventsInterface,
     ):
         self.genre_repo = genre_repo
         self.books_repo = books_repo
         self.uow = uow
         self.authors_repo = authors_repo
-        
+        self.events_repo = events_repo
+
     async def list_genres(self):
         genres = await self.genre_repo.list_all()
         return genres
@@ -42,9 +46,22 @@ class BookService:
     async def list_authors(self):
         authors = await self.authors_repo.list_all()
         return authors
-    
-    async def get_book(self, book_id: UUID) -> Book | None:
-        return await self.books_repo.by_id(book_id)
+
+    async def _apply_user_flags(self, books: list[Book], user: User):
+        ids = [b.id for b in books]
+        events = await self.events_repo.list_by_user_books(ids, user.id)
+        liked = {e.book_id for e in events if e.interaction == Interaction.LIKE}
+        viewed = {e.book_id for e in events if e.interaction == Interaction.CLICK}
+        for b in books:
+            setattr(b, 'is_liked_by_user', b.id in liked)
+            setattr(b, 'is_viewed_by_user', b.id in viewed)
+        return books
+
+    async def get_book(self, book_id: UUID, user: User | None = None) -> Book | None:
+        book = await self.books_repo.by_id(book_id)
+        if book and user is not None:
+            await self._apply_user_flags([book], user)
+        return book
     
     async def get_author(self, author_id: int) -> Author | None:
         return await self.authors_repo.by_id(author_id)
@@ -102,21 +119,20 @@ class BookService:
         book.photo_urls.extend(urls)
         return book
 
-    async def list_books(self, user: User, limit: int, filter: bool = False):
+    async def list_books(self, user: User, limit: int, filter: bool = False, query: str | None = None):
         if filter:
             lat, lon = user.latitude, user.longitude
-            # NOTE: we should reconsider onboarding policy
-            # if lat is None or lon is None:
-            #     raise HTTPException(412, detail='You should complete onboarding first')
-            
-            books = await self.books_repo.recommended_books(user, lat, lon, limit)
+            books = await self.books_repo.recommended_books(user, lat, lon, limit, query)
         else:
             books = await self.books_repo.list_books()
-            
+
+        await self._apply_user_flags(books, user)
         return books
-    
+
     async def list_user_books(self, user: User, limit: int):
-        return await self.books_repo.list_user_books(user.id, limit)
+        books = await self.books_repo.list_user_books(user.id, limit)
+        await self._apply_user_flags(books, user)
+        return books
 
     async def edit_book(self, payload: BookPatch, book_id: UUID, user: User):
         data = payload.model_dump(exclude_none=True)
@@ -126,7 +142,7 @@ class BookService:
         #     if not is_available:
         #         data['unavailable_manual'] = True
         
-        book = await self.get_book(book_id)
+        book = await self.get_book(book_id, user)
         if book is None:
             raise HTTPException(404, detail='Book with this id not found')
         if book.owner_id != user.id:

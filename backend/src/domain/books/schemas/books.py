@@ -26,6 +26,8 @@ class BookModel(TimestampModel, BaseModel):
 
     exchange_location: ExchangeLocation = Field(...)
     is_available: bool = Field(...)
+    is_liked_by_user: bool = Field(False)
+    is_viewed_by_user: bool = Field(False)
 
 
 class BookCreate(BaseModel):
