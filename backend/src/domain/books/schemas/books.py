@@ -19,13 +19,15 @@ class BookModel(TimestampModel, BaseModel):
 
     author: AuthorModel = Field(...)
     genre: GenreModel = Field(...)
-    language: str = Field(..., min_length=2, max_length=2)
+    language_code: str = Field(..., min_length=2, max_length=2)
     pages: int | None = Field(None)
     condition: Condition = Field(...)
     photo_urls: list[str] = Field(...)
 
     exchange_location: ExchangeLocation = Field(...)
     is_available: bool = Field(...)
+    is_liked_by_user: bool = Field(False)
+    is_viewed_by_user: bool = Field(False)
 
 
 class BookCreate(BaseModel):
@@ -35,7 +37,7 @@ class BookCreate(BaseModel):
 
     author_id: int = Field(...)
     genre_id: int = Field(...)
-    language: str = Field(..., min_length=2, max_length=2)
+    language_code: str = Field(..., min_length=2, max_length=2)
     pages: int | None = Field(None)
     condition: Condition = Field(...)
 
@@ -47,7 +49,7 @@ class BookPatch(BookCreate):
     title: str | None = Field(None)
     author_id: int | None = Field(None)
     genre_id: int | None = Field(None)
-    language: Annotated[str, constr(min_length=2, max_length=2)] | None = Field(None)
+    language_code: Annotated[str, constr(min_length=2, max_length=2)] | None = Field(None)
     condition: Condition | None = Field(None)
     exchange_location_id: int | None = Field(None)
     is_available: bool | None = Field(None)

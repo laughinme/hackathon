@@ -6,6 +6,7 @@ from database.relational_db import (
     GenresInterface,
     BooksInterface,
     AuthorsInterface,
+    BookEventsInterface,
 )
 from .books_service import BookService
 
@@ -16,4 +17,5 @@ async def get_books_service(
     genres_repo = GenresInterface(uow.session)
     books_repo = BooksInterface(uow.session)
     authors_repo = AuthorsInterface(uow.session)
-    return BookService(uow, genres_repo, books_repo, authors_repo)
+    events_repo = BookEventsInterface(uow.session)
+    return BookService(uow, genres_repo, books_repo, authors_repo, events_repo)

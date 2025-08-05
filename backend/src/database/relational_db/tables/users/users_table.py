@@ -2,7 +2,6 @@ from uuid import UUID, uuid4
 from datetime import datetime, date
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import ForeignKey, Integer, Uuid, String, Boolean, DateTime, Float, Date, false
-from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.dialects.postgresql import BYTEA, ENUM
 
 from domain.auth import Role
@@ -27,7 +26,9 @@ class User(TimestampMixin, Base):
     bio: Mapped[str | None] = mapped_column(String, nullable=True)
     birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     gender: Mapped[Gender | None] = mapped_column(ENUM(Gender), nullable=True)
-    language: Mapped[str | None] = mapped_column(String(2), nullable=True)
+    language_code: Mapped[str | None] = mapped_column(
+        String(2), ForeignKey('languages.code'), nullable=True
+    )
     
     # Geography
     city_id: Mapped[int | None] = mapped_column(

@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -9,7 +10,7 @@ from service.users import UserService, get_user_service
 
 router = APIRouter()
 config = Settings() # pyright: ignore[reportCallIssue]
-
+logger = logging.getLogger(__name__)
 
 @router.get(
     path='/',
@@ -32,5 +33,6 @@ async def update_profile(
     user: Annotated[User, Depends(auth_user)],
     svc: Annotated[UserService, Depends(get_user_service)],
 ):
+    logger.info(payload.model_dump_json())
     await svc.patch_user(payload, user)
     return user

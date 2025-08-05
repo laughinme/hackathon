@@ -13,7 +13,8 @@ from database.relational_db import (
     User, 
     UserGenreInterface,
     GenresInterface,
-    CitiesInterface
+    CitiesInterface,
+    LanguagesInterface
 )
 from .exceptions import IncorrectGenreId, IncorrectCityId
 
@@ -27,6 +28,7 @@ class UserService:
         ug_repo: UserGenreInterface,
         genres_repo: GenresInterface,
         cities_repo: CitiesInterface,
+        lang_repo: LanguagesInterface
         
     ):
         self.uow = uow
@@ -34,6 +36,7 @@ class UserService:
         self.ug_repo = ug_repo
         self.genres_repo = genres_repo
         self.cities_repo = cities_repo
+        self.lang_repo = lang_repo
         
     async def get_user(self, user_id: UUID | str) -> User | None:
         return await self.user_repo.get_by_id(user_id)
@@ -52,6 +55,8 @@ class UserService:
         for field, value in data.items():
             setattr(user, field, value)
             
+        await self.uow.session.flush()
+            
         await self.uow.session.refresh(user)
             
     async def set_genres(self, new_ids: set[int], user: User):
@@ -66,23 +71,9 @@ class UserService:
         await self.ug_repo.bulk_add(new_ids, user.id)
         
         await self.uow.session.refresh(user)
-            
-    # async def replace_genres(self, payload: GenresPatch, user: User):
-    #     new_ids = payload.favorite_genres
-    #     genres = await self.genres_repo.get_by_ids(new_ids)
-    #     if len(genres) != len(new_ids):
-    #         raise IncorrectGenreId
         
-    #     current_ids = set(pair.genre_id for pair in await self.ug_repo.list_ids(user.id))
-        
-    #     to_add = new_ids - current_ids
-    #     to_del = current_ids - new_ids
-        
-    #     if to_del:
-    #         await self.ug_repo.delete_pairs(to_del, user.id)
-        
-    #     if to_add:
-    #         await self.ug_repo.bulk_add(new_ids, user.id)
+    async def list_languages(self, q: str, limit: int):
+        return await self.lang_repo.search(q, limit)
 
     async def add_picture(
         self,

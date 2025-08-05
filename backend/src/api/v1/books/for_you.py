@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 
 from database.relational_db import User
 from domain.books import BookModel
@@ -19,7 +19,15 @@ config = Settings() # pyright: ignore[reportCallIssue]
 async def for_you(
     user: Annotated[User, Depends(auth_user)],
     svc: Annotated[BookService, Depends(get_books_service)],
-    limit: int = Query(50, description='Number of books to return'),
+    query: str = Query("", max_length=50),
+    limit: int | None = Query(None, ge=1, le=50),
 ):
-    books = await svc.list_books(user, limit, filter=True)
+    if query == "":
+        if limit is not None:
+            raise HTTPException(400, detail="Limit is not allowed when query is empty")
+        limit_ = 50
+    else:
+        limit_ = limit or 10
+
+    books = await svc.list_books(user, limit_, filter=True, query=query)
     return books

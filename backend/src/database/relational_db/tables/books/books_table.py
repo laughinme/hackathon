@@ -28,7 +28,7 @@ class Book(TimestampMixin, Base):
     title: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=True)
     extra_terms: Mapped[str] = mapped_column(String, nullable=True)
-    language: Mapped[str] = mapped_column(String(2), nullable=False)
+    language_code: Mapped[str] = mapped_column(String(2), ForeignKey('languages.code'), nullable=False)
     pages: Mapped[int] = mapped_column(Integer, nullable=True)
     condition: Mapped[Condition] = mapped_column(ENUM(Condition), nullable=False)
     photo_urls: Mapped[list[str]] = mapped_column(ARRAY(String, dimensions=1), nullable=False, default=[])

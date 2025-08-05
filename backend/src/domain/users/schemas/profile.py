@@ -20,7 +20,7 @@ class UserModel(TimestampModel):
     birth_date: date | None = Field(None)
     age: int | None = Field(None)
     gender: Gender | None = Field(None)
-    language: Annotated[str, constr(min_length=2, max_length=2)] | None = Field(None)
+    language_code: Annotated[str, constr(min_length=2, max_length=2)] | None = Field(None)
     
     favorite_genres: list[GenreModel] = Field(...)
     
@@ -40,7 +40,7 @@ class UserPatch(BaseModel):
     bio: str | None = Field(None)
     birth_date: date | None = Field(None)
     gender: Gender | None = Field(None)
-    language: Annotated[str, constr(min_length=2, max_length=2)] | None = Field(None)
+    language_code: Annotated[str, constr(min_length=2, max_length=2)] | None = Field(None)
     
     city_id: int | None = Field(None)
     
