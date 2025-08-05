@@ -19,7 +19,7 @@ class UserNearby(BaseModel):
     bio: str | None = Field(None)
     age: int | None = Field(None)
     gender: Gender | None = Field(None)
-    language: Annotated[str, constr(min_length=2, max_length=2)] | None = Field(None)
+    language_code: Annotated[str, constr(min_length=2, max_length=2)] | None = Field(None)
     
     favorite_genres: list[GenreModel] = Field(...)
     
@@ -41,7 +41,7 @@ class UserShare(BaseModel):
     bio: str | None = Field(None)
     age: int | None = Field(None)
     gender: Gender | None = Field(None)
-    language: Annotated[str, constr(min_length=2, max_length=2)] | None = Field(None)
+    language_code: Annotated[str, constr(min_length=2, max_length=2)] | None = Field(None)
     
     favorite_genres: list[GenreModel] = Field(...)
     
