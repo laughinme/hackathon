@@ -55,6 +55,8 @@ class UserService:
         for field, value in data.items():
             setattr(user, field, value)
             
+        await self.uow.session.flush()
+            
         await self.uow.session.refresh(user)
             
     async def set_genres(self, new_ids: set[int], user: User):

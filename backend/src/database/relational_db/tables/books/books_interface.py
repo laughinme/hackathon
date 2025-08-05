@@ -63,8 +63,8 @@ class BooksInterface:
             .order_by(score.desc())
             .limit(limit)
         )
-        if user.language is not None:
-            stmt = stmt.where(Book.language == user.language)
+        if user.language_code is not None:
+            stmt = stmt.where(Book.language_code == user.language_code)
         if user.city_id is not None:
             stmt = stmt.where(ExchangeLocation.city_id == user.city_id)
         
