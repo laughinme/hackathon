@@ -4,7 +4,9 @@ package com.example.hackathon.data.remote.network
 import com.example.hackathon.data.remote.dto.BookCreateRequest
 import com.example.hackathon.data.remote.dto.BookModelDto
 import com.example.hackathon.data.remote.dto.CityModelDto
+import com.example.hackathon.data.remote.dto.ExchangeCreateRequest
 import com.example.hackathon.data.remote.dto.ExchangeLocationDto
+import com.example.hackathon.data.remote.dto.ExchangeModelDto
 import com.example.hackathon.data.remote.dto.GenreModelDto
 import com.example.hackathon.data.remote.dto.GenresPatchRequest
 import com.example.hackathon.data.remote.dto.TokenPairDto
@@ -145,6 +147,42 @@ interface ApiService {
      */
     @GET("/api/v1/geo/exchange_locations/nearest")
     suspend fun getNearestExchangePoint(): Response<ExchangeLocationDto>
+
+    /**
+     * Получение списка книг "для вас".
+     * Требуется токен доступа.
+     * @param limit Ограничение количества книг.
+     * @return Список моделей книг.
+     */
+    @GET("/api/v1/books/for_you")
+    suspend fun getBooksForYou(@Query("limit") limit: Int? = null): Response<List<BookModelDto>>
+
+    /**
+     * Записывает клик пользователя по книге.
+     * Используется для системы рекомендаций.
+     * @param bookId ID книги, по которой кликнули.
+     */
+    @POST("/api/v1/books/{book_id}/click")
+    suspend fun recordClick(@Path("book_id") bookId: String): Response<Unit>
+
+    /**
+     * Записывает лайк пользователя для книги.
+     * @param bookId ID книги, которую лайкнули.
+     */
+    @POST("/api/v1/books/{book_id}/like")
+    suspend fun likeBook(@Path("book_id") bookId: String): Response<Unit>
+
+    /**
+     * Резервирует книгу, инициируя процесс обмена.
+     * @param bookId ID книги для резерва.
+     * @param request Тело запроса с дополнительной информацией (комментарий, время встречи).
+     * @return Модель созданного обмена.
+     */
+    @POST("/api/v1/books/{book_id}/reserve")
+    suspend fun reserveBook(
+        @Path("book_id") bookId: String,
+        @Body request: ExchangeCreateRequest
+    ): Response<ExchangeModelDto>
 }
 
 

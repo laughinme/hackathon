@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import com.example.hackathon.domain.model.Resource
 import android.location.Location
 import android.location.LocationManager
+import android.util.Log
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -59,6 +60,7 @@ class LocationTrackerImpl @Inject constructor(
                 }
                 addOnSuccessListener {
                     cont.resume(Resource.Success(it), null)
+                    Log.d("LocationTracker", "Получена геолокация: $it")
                 }
                 addOnFailureListener {
                     cont.resume(Resource.Error("Не удалось получить геолокацию: ${it.message}"), null)

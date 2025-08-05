@@ -28,6 +28,7 @@ data class AddBookState(
     val pages: String = "",
     val selectedGenre: Genre? = null,
     val selectedCondition: BookCondition? = null,
+    val selectedExchangeLocation: String = "",
     val selectedPhotos: List<File> = emptyList(),
 
     // Состояние асинхронных операций
@@ -42,6 +43,7 @@ sealed interface AddBookEvent {
     data class OnPagesChange(val value: String) : AddBookEvent
     data class OnGenreSelect(val genre: Genre) : AddBookEvent
     data class OnConditionSelect(val condition: BookCondition) : AddBookEvent
+    data class OnExchangeLocationSelect(val locationId: String) : AddBookEvent
     data class OnPhotosSelected(val files: List<File>) : AddBookEvent
     object OnCreateClick : AddBookEvent
     object ResetCreationStatus : AddBookEvent // Для сброса состояния после навигации или показа сообщения
@@ -71,6 +73,7 @@ class AddBookViewModel @Inject constructor(
             is AddBookEvent.OnPagesChange -> _state.update { it.copy(pages = event.value) }
             is AddBookEvent.OnGenreSelect -> _state.update { it.copy(selectedGenre = event.genre) }
             is AddBookEvent.OnConditionSelect -> _state.update { it.copy(selectedCondition = event.condition) }
+            is AddBookEvent.OnExchangeLocationSelect -> _state.update { it.copy(selectedExchangeLocation = event.locationId) }
             is AddBookEvent.OnPhotosSelected -> _state.update { it.copy(selectedPhotos = event.files) }
             is AddBookEvent.OnCreateClick -> createBook()
             is AddBookEvent.ResetCreationStatus -> _state.update { it.copy(creationState = null) }
@@ -94,7 +97,7 @@ class AddBookViewModel @Inject constructor(
             language = "ru",
             pages = _state.value.pages.toIntOrNull(),
             condition = _state.value.selectedCondition ?: BookCondition.NORMAL,
-            exchangeLocationId = 1, // TODO: Заменить на реальный ID
+            exchangeLocationId = _state.value.selectedExchangeLocation.toInt(),
             photos = _state.value.selectedPhotos
         )
 

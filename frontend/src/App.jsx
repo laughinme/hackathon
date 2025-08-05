@@ -10,6 +10,7 @@ import HomePage from './components/pages/HomePage';
 import UserProfilePage from './components/pages/UserProfilePage';
 import AddBookPage from './components/pages/AddBookPage';
 import OnboardingPage from './components/pages/OnboardingPage';
+import MapPage from './components/pages/MapPage';
 import PrivateRoute from './components/layout/PrivateRoute';
 import apiProtected, { apiPublic, setAccessToken } from './api/axios';
 
@@ -56,6 +57,7 @@ const StyleInjector = () => {
 
 export default function App() {
   const [token, setToken] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -107,10 +109,14 @@ export default function App() {
         const newAccessToken = response.data.access_token;
         setToken(newAccessToken);
         setAccessToken(newAccessToken);
+        
+        const { data } = await apiProtected.get('/users/me/');
+        setCurrentUser(data);
 
       } catch (error) {
         setToken(null);
         setAccessToken(null);
+        setCurrentUser(null);
       } finally {
         setIsAuthLoading(false);
       }
@@ -119,16 +125,24 @@ export default function App() {
     checkAuthStatus();
   }, []);
 
-  const login = (newToken, redirectPath = '/home') => {
+  const login = async (newToken, redirectPath = '/home') => {
     setToken(newToken);
     setAccessToken(newToken);
-    navigate(redirectPath);
+    try {
+      const { data } = await apiProtected.get('/users/me/');
+      setCurrentUser(data);
+      navigate(redirectPath);
+    } catch (error) {
+      console.error("Failed to fetch user profile after login.", error);
+      logout();
+    }
   };
 
   const logout = () => {
     apiProtected.post('/auth/logout').finally(() => {
       setToken(null);
       setAccessToken(null);
+      setCurrentUser(null);
       document.cookie = "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       document.cookie = "csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       navigate('/login');
@@ -144,7 +158,7 @@ export default function App() {
   }
 
   return (
-    <AuthContext.Provider value={{ token, login, logout }}>
+    <AuthContext.Provider value={{ token, currentUser, login, logout }}>
       <StyleInjector />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
@@ -174,6 +188,18 @@ export default function App() {
         <Route path="/home" element={<PrivateRoute><div className="flex flex-col min-h-screen"><UserHeader /><main className="flex-1 overflow-auto"><HomePage books={allBooks} /></main></div></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><div className="flex flex-col min-h-screen"><UserHeader /><main className="flex-1 overflow-auto"><UserProfilePage allBooks={allBooks} /></main></div></PrivateRoute>} />
         <Route path="/add-book" element={<PrivateRoute><div className="flex flex-col min-h-screen"><UserHeader /><main className="flex-1 overflow-auto"><AddBookPage onAddBook={addBook} /></main></div></PrivateRoute>} />
+        
+        {/* --- ИЗМЕНЕНИЕ ЗДЕСЬ --- */}
+        <Route path="/map" element={
+          <PrivateRoute>
+            <div className="flex flex-col min-h-screen">
+              <UserHeader />
+              <main className="flex-1 overflow-auto relative">
+                <MapPage />
+              </main>
+            </div>
+          </PrivateRoute>} 
+        />
         
       </Routes>
     </AuthContext.Provider>
