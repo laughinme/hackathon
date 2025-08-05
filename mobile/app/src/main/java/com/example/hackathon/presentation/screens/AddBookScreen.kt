@@ -256,15 +256,12 @@ fun AddBookScreen(
                         }
                         item {
                             OutlinedTextField(
-                                value = state.pages,
+                                value = pickedLocation ?: "Удобная точка обмена",
                                 enabled = false,
                                 onValueChange = {},
                                 label = {
-                                    if (pickedLocation != null) {
-                                        Text(pickedLocation!!)
-                                    } else {
-                                        Text("Удобная точка обмена")
-                                    } },
+                                    Text("Удобная точка обмена")
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable(onClick = {

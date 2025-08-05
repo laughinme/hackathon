@@ -28,7 +28,7 @@ data class UserModelDto(
     val age: Int?,
     @SerializedName("gender")
     val gender: String?, // "male", "female", "unknown"
-    @SerializedName("language")
+    @SerializedName("language_code")
     val language: String?,
     @SerializedName("favorite_genres")
     val favoriteGenres: List<GenreModelDto>,
@@ -61,7 +61,7 @@ data class UserPatchRequest(
     val birthDate: String? = null, // Формат "date"
     @SerializedName("gender")
     val gender: String? = null, // "male", "female", "unknown"
-    @SerializedName("language")
+    @SerializedName("language_code")
     val language: String? = null,
     @SerializedName("city_id")
     val cityId: Int? = null,
