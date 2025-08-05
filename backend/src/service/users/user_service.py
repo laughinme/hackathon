@@ -72,8 +72,8 @@ class UserService:
         
         await self.uow.session.refresh(user)
         
-    async def list_languages(self):
-        return await self.lang_repo.list_all()
+    async def list_languages(self, q: str, limit: int):
+        return await self.lang_repo.search(q, limit)
 
     async def add_picture(
         self,
