@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import BookCard from '../common/BookCard';
 import BookFilters from '../common/BookFilters';
 import ReserveBookModal from '../common/ReserveBookModal';
@@ -7,12 +7,19 @@ import { getBooksForYou } from '../../api/services';
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
   const [books, setBooks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({ query: '' });
+  const [filters, setFilters] = useState({ query: searchParams.get('query') || '' });
 
   const [reservingBook, setReservingBook] = useState(null);
+
+  useEffect(() => {
+    const query = searchParams.get('query') || '';
+    setFilters(prevFilters => ({...prevFilters, query}));
+  }, [searchParams]);
 
   const fetchBooks = useCallback(async () => {
     setIsLoading(true);
@@ -36,6 +43,12 @@ const HomePage = () => {
      alert("Книга успешно забронирована!");
      fetchBooks(); 
   }
+
+  const handleLikeToggle = (bookId, newLikeStatus) => {
+    setBooks(currentBooks => currentBooks.map(b => 
+      b.id === bookId ? { ...b, is_liked_by_user: newLikeStatus } : b
+    ));
+  };
   
   const selectedBookForModal = books.find(b => b.id === reservingBook);
 
@@ -61,7 +74,8 @@ const HomePage = () => {
             key={book.id} 
             book={book} 
             onReserve={() => setReservingBook(book.id)} 
-            onSelect={() => navigate(`/book/${book.id}`)} 
+            onSelect={() => navigate(`/book/${book.id}`)}
+            onLikeToggle={handleLikeToggle}
           />
         ))}
       </div>
@@ -87,7 +101,7 @@ const HomePage = () => {
           </div>
         </div>
 
-        <BookFilters onFilterChange={setFilters} />
+        <BookFilters onFilterChange={(newFilters) => setFilters(prev => ({...prev, ...newFilters}))} />
         
         {renderContent()}
       </div>

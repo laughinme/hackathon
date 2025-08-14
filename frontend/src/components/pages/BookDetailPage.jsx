@@ -1,27 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, User, Heart, Share2, Info, Loader2 } from 'lucide-react';
-import apiProtected from '../../api/axios'; // Предполагается, что у вас есть axios instance
+import { ArrowLeft, MapPin, Edit, Heart, Share2, Info, Loader2 } from 'lucide-react';
+import { getBookById, likeBook, recordBookClick } from '../../api/services';
 import ReserveBookModal from '../common/ReserveBookModal';
-
-// Заглушка, если currentUser еще не реализован через контекст
-const FAKE_USER_ID = 'user_placeholder_id';
+import { AuthContext } from '../../App';
 
 export default function BookDetailPage() {
   const { bookId } = useParams();
   const navigate = useNavigate();
+  const { currentUser } = useContext(AuthContext);
 
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showReserveModal, setShowReserveModal] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isProcessingLike, setIsProcessingLike] = useState(false);
 
   const fetchBook = React.useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiProtected.get(`/books/${bookId}/`);
+      const response = await getBookById(bookId);
       setBook(response.data);
+      setIsLiked(response.data.is_liked_by_user);
       setActiveImage(0);
     } catch (err) {
       console.error("Failed to fetch book details", err);
@@ -33,18 +35,33 @@ export default function BookDetailPage() {
 
   useEffect(() => {
     fetchBook();
-  }, [fetchBook]);
+    recordBookClick(bookId).catch(err => console.error("Failed to record click", err));
+  }, [fetchBook, bookId]);
 
   const handleReservationSuccess = () => {
      alert("Книга успешно забронирована!");
      fetchBook();
   }
 
+  const handleLikeClick = async () => {
+    if (isProcessingLike) return;
+    setIsProcessingLike(true);
+    try {
+      await likeBook(book.id);
+      setIsLiked(!isLiked);
+    } catch (err) {
+      console.error("Failed to toggle like", err);
+      alert("Не удалось обработать лайк.");
+    } finally {
+      setIsProcessingLike(false);
+    }
+  }
+
   if (loading) return <div className="p-8 text-center flex items-center justify-center gap-2"><Loader2 className="animate-spin" /> Загрузка...</div>;
   if (error) return <div className="p-8 text-center text-red-400">{error}</div>;
   if (!book) return <div className="p-8 text-center">Книга не найдена.</div>;
 
-  const isOwner = FAKE_USER_ID === book.owner_id;
+  const isOwner = currentUser?.id === book.owner_id;
   const currentImage = book.photo_urls?.[activeImage] || 'https://placehold.co/400x600/3A342B/E8E2D4?text=No+Image';
 
   return (
@@ -86,13 +103,21 @@ export default function BookDetailPage() {
                  <span className="text-sm font-medium px-2 py-1 rounded capitalize" style={{ backgroundColor: 'var(--md-sys-color-secondary-container)', color: 'var(--md-sys-color-on-secondary-container)' }}>{book.condition}</span>
               </div>
               <div className="pt-4 border-t" style={{borderColor: 'var(--md-sys-color-outline-variant)'}}>
-                <p><strong className="text-muted-foreground">Язык:</strong> {book.language_code?.toUpperCase()}</p>
-                {book.pages && <p><strong className="text-muted-foreground">Страниц:</strong> {book.pages}</p>}
+                <p><strong className="font-semibold">Язык:</strong> {book.language_code?.toUpperCase()}</p>
+                {book.pages && <p><strong className="font-semibold">Страниц:</strong> {book.pages}</p>}
               </div>
               <div className="flex-grow"></div>
               <div className="flex items-center gap-2">
-                 <button className="p-3 rounded-lg flex-1 font-semibold flex items-center justify-center gap-2" style={{backgroundColor: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)'}}>
-                    <Heart size={20} /> Лайк
+                 <button 
+                    onClick={handleLikeClick} 
+                    disabled={isProcessingLike}
+                    className="p-3 rounded-lg flex-1 font-semibold flex items-center justify-center gap-2 transition-colors"
+                    style={{
+                        backgroundColor: isLiked ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-primary-container)', 
+                        color: isLiked ? 'var(--md-sys-color-on-primary)' : 'var(--md-sys-color-on-primary-container)'
+                    }}
+                  >
+                    <Heart size={20} fill={isLiked ? 'currentColor' : 'none'} /> {isLiked ? 'В лайках' : 'Лайк'}
                  </button>
                  <button className="p-3 rounded-lg font-semibold" style={{backgroundColor: 'var(--md-sys-color-secondary-container)', color: 'var(--md-sys-color-on-secondary-container)'}}>
                     <Share2 size={20} />
@@ -117,11 +142,11 @@ export default function BookDetailPage() {
              <h3 className="text-xl font-bold">{isOwner ? 'Это ваша книга' : book.is_available ? 'Доступна для обмена' : 'Уже забронирована'}</h3>
             <div className="flex items-start gap-2 text-sm"><MapPin size={16} className="mt-1 flex-shrink-0" /> {book.exchange_location?.address || 'Адрес не указан'}</div>
             <button 
-                onClick={() => setShowReserveModal(true)}
-                disabled={!book.is_available || isOwner} 
-                className="w-full py-3 rounded-lg font-semibold disabled:cursor-not-allowed" 
-                style={{ backgroundColor: (!book.is_available || isOwner) ? 'var(--md-sys-color-surface-variant)' : 'var(--md-sys-color-primary)', color: (!book.is_available || isOwner) ? 'var(--md-sys-color-on-surface-variant)' : 'var(--md-sys-color-on-primary)' }}>
-              {isOwner ? 'Редактировать' : book.is_available ? 'Забронировать книгу' : 'Недоступна'}
+                onClick={() => isOwner ? navigate(`/book/${book.id}/edit`) : setShowReserveModal(true)}
+                disabled={!book.is_available && !isOwner} 
+                className="w-full py-3 rounded-lg font-semibold disabled:cursor-not-allowed flex items-center justify-center gap-2" 
+                style={{ backgroundColor: (!book.is_available && !isOwner) ? 'var(--md-sys-color-surface-variant)' : 'var(--md-sys-color-primary)', color: (!book.is_available && !isOwner) ? 'var(--md-sys-color-on-surface-variant)' : 'var(--md-sys-color-on-primary)' }}>
+              {isOwner ? <><Edit size={16} />Редактировать</> : (book.is_available ? 'Забронировать книгу' : 'Недоступна')}
             </button>
           </div>
           <div className="p-6 rounded-xl space-y-4" style={{ backgroundColor: 'var(--md-sys-color-surface-container)' }}>

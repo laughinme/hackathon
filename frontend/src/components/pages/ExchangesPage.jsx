@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getOwnedExchanges, getRequestedExchanges, acceptExchange, declineExchange, cancelExchange } from '../../api/services';
-import { ArrowLeft, Clock, User, Check, X, ThumbsDown, Loader2 } from 'lucide-react';
+import { getOwnedExchanges, getRequestedExchanges, acceptExchange, declineExchange, cancelExchange, finishExchange } from '../../api/services';
+import { ArrowLeft, Clock, User, Check, X, ThumbsDown, Loader2, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const ExchangeCard = ({ exchange, type, onAction }) => {
@@ -8,10 +8,10 @@ const ExchangeCard = ({ exchange, type, onAction }) => {
     const isOwner = type === 'owned';
     const partner = isOwner ? requester : owner;
 
-    const handleAction = (action) => {
+    const handleAction = (action, payload) => {
         if (action === 'decline' || action === 'cancel') {
             const reason = prompt("Укажите причину (необязательно):");
-            onAction(action, id, reason || "Действие выполнено без указания причины");
+            onAction(action, id, { cancel_reason: reason });
         } else {
             onAction(action, id);
         }
@@ -30,7 +30,12 @@ const ExchangeCard = ({ exchange, type, onAction }) => {
              return <div className="mt-auto pt-2"><button onClick={() => handleAction('cancel')} className="bg-gray-500 hover:bg-gray-400 text-white font-semibold py-2 px-3 rounded-lg w-full text-sm">Отменить запрос</button></div>;
         }
         if (progress === 'accepted') {
-             return <div className="mt-auto pt-2"><button onClick={() => handleAction('cancel')} className="bg-red-600 hover:bg-red-500 text-white font-semibold py-2 px-3 rounded-lg w-full text-sm">Отменить обмен</button></div>;
+             return (
+                <div className="flex gap-2 mt-auto pt-2">
+                    <button onClick={() => handleAction('finish')} className="flex-1 text-sm bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-3 rounded-lg flex items-center justify-center gap-1"><Award size={16}/> Завершить</button>
+                    <button onClick={() => handleAction('cancel')} className="flex-1 text-sm bg-red-600 hover:bg-red-500 text-white font-semibold py-2 px-3 rounded-lg flex items-center justify-center gap-1"><X size={16}/> Отменить</button>
+                </div>
+             );
         }
         return null;
     };
@@ -88,18 +93,19 @@ export default function ExchangesPage() {
         fetchData();
     }, [fetchData]);
 
-    const handleAction = async (action, exchangeId, reason) => {
+    const handleAction = async (action, exchangeId, payload) => {
         try {
             switch(action) {
                 case 'accept': await acceptExchange(exchangeId); break;
-                case 'decline': await declineExchange(exchangeId, { cancel_reason: reason }); break;
-                case 'cancel': await cancelExchange(exchangeId, { cancel_reason: reason }); break;
+                case 'decline': await declineExchange(exchangeId, payload); break;
+                case 'cancel': await cancelExchange(exchangeId, payload); break;
+                case 'finish': await finishExchange(exchangeId); break;
                 default: return;
             }
             fetchData();
         } catch (err) {
             console.error(`Failed to ${action} exchange:`, err);
-            alert(`Ошибка: не удалось выполнить действие.`);
+            alert(`Ошибка: не удалось выполнить действие. ${err.response?.data?.detail || ''}`);
         }
     };
 

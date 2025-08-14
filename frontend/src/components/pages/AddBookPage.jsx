@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { ArrowLeft, Upload, Book, Camera, X } from 'lucide-react';
-import apiProtected from '../../api/axios';
+import { getGenres, getAuthors, getExchangeLocations, createBook, uploadBookPhotos } from '../../api/services';
 
-export default function AddBookPage({ onAddBook }) {
+export default function AddBookPage() {
   const navigate = useNavigate();
 
   const [genres, setGenres] = useState([]);
@@ -22,38 +22,29 @@ export default function AddBookPage({ onAddBook }) {
     formState: { errors, isSubmitting }
   } = useForm({
     defaultValues: {
-      language: 'ru',
+      language_code: 'ru',
       condition: 'good',
     }
   });
 
   useEffect(() => {
     const fetchData = async () => {
-      const results = await Promise.allSettled([
-        apiProtected.get('/books/genres/'),
-        apiProtected.get('/books/authors/'),
-        apiProtected.get('/geo/exchange_locations/')
-      ]);
-
-      if (results[0].status === 'fulfilled') {
-        setGenres(results[0].value.data);
-      } else {
-        console.error("Failed to fetch genres:", results[0].reason);
+      setIsLoading(true);
+      try {
+          const [genresRes, authorsRes, locationsRes] = await Promise.all([
+              getGenres(),
+              getAuthors(),
+              getExchangeLocations(false)
+          ]);
+          setGenres(genresRes.data);
+          setAuthors(authorsRes.data);
+          setExchangeLocations(locationsRes.data);
+      } catch (error) {
+          console.error("Failed to fetch form data:", error);
+          alert("Не удалось загрузить данные для формы. " + (error.response?.data?.detail || ""));
+      } finally {
+          setIsLoading(false);
       }
-
-      if (results[1].status === 'fulfilled') {
-        setAuthors(results[1].value.data);
-      } else {
-        console.error("Failed to fetch authors:", results[1].reason);
-      }
-
-      if (results[2].status === 'fulfilled') {
-        setExchangeLocations(results[2].value.data);
-      } else {
-        console.error("Failed to fetch exchange locations:", results[2].reason);
-      }
-      
-      setIsLoading(false);
     };
     fetchData();
   }, []);
@@ -86,13 +77,13 @@ export default function AddBookPage({ onAddBook }) {
       description: data.description,
       author_id: parseInt(data.author_id, 10),
       genre_id: parseInt(data.genre_id, 10),
-      language_code: 'ru', // Временно, пока нет выбора языков
+      language_code: data.language_code,
       condition: data.condition,
       exchange_location_id: parseInt(data.exchange_location_id, 10),
     };
     
     try {
-        const bookResponse = await apiProtected.post('/books/create', payload);
+        const bookResponse = await createBook(payload);
         const newBookId = bookResponse.data.id;
 
         if (selectedImages.length > 0) {
@@ -100,9 +91,7 @@ export default function AddBookPage({ onAddBook }) {
             selectedImages.forEach(file => {
                 formData.append('files', file);
             });
-            await apiProtected.put(`/books/${newBookId}/photos`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
+            await uploadBookPhotos(newBookId, formData);
         }
         
         alert('Книга успешно добавлена!');
@@ -197,7 +186,7 @@ export default function AddBookPage({ onAddBook }) {
                 <div className="space-y-1">
                    <label className="text-sm font-medium">Состояние книги *</label>
                    <div className="flex gap-6 pt-2">
-                     {['new', 'good', 'normal'].map(condition => (
+                     {['new', 'perfect', 'good', 'normal'].map(condition => (
                        <div key={condition} className="flex items-center space-x-2">
                          <input type="radio" id={condition} value={condition} {...register('condition')} className="w-4 h-4" defaultChecked={condition === 'good'} />
                          <label htmlFor={condition} className="capitalize">{condition}</label>

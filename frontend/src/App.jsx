@@ -1,11 +1,10 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { Routes, Route, useNavigate, useLocation, Outlet, Navigate } from 'react-router-dom';
 
 import apiProtected, { apiPublic, setAccessToken, getAccessToken } from './api/axios';
 import { getMyProfile } from './api/services';
 
 import UserHeader from './components/layout/UserHeader';
-
 import LoginPage from './components/auth/LoginPage';
 import RegisterPage from './components/auth/RegisterPage';
 import HomePage from './components/pages/HomePage';
@@ -15,6 +14,10 @@ import BookDetailPage from './components/pages/BookDetailPage';
 import OnboardingPage from './components/pages/OnboardingPage';
 import ExchangesPage from './components/pages/ExchangesPage';
 import MapPage from './components/pages/MapPage';
+import LikedBooksPage from './components/pages/LikedBooksPage';
+import EditProfilePage from './components/pages/EditProfilePage';
+import EditBookPage from './components/pages/EditBookPage';
+
 
 export const AuthContext = createContext(null);
 
@@ -46,7 +49,8 @@ const StyleInjector = () => {
 };
 
 const PrivateRoute = () => {
-  const { token } = useContext(AuthContext);
+  const { token, isAuthLoading } = useContext(AuthContext);
+  if (isAuthLoading) return null;
   return token ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
@@ -54,7 +58,7 @@ const AppContent = () => {
     const { token } = useContext(AuthContext);
     const location = useLocation();
     
-    const noHeaderPaths = ['/login', '/register', '/onboarding'];
+    const noHeaderPaths = ['/login', '/register', '/onboarding', '/map'];
     const showHeader = token && !noHeaderPaths.includes(location.pathname);
 
     return (
@@ -70,10 +74,13 @@ const AppContent = () => {
                         <Route path="/" element={<HomePage />} />
                         <Route path="/home" element={<HomePage />} />
                         <Route path="/profile" element={<UserProfilePage />} />
+                        <Route path="/profile/edit" element={<EditProfilePage />} />
                         <Route path="/add-book" element={<AddBookPage />} />
                         <Route path="/book/:bookId" element={<BookDetailPage />} />
+                        <Route path="/book/:bookId/edit" element={<EditBookPage />} />
                         <Route path="/exchanges" element={<ExchangesPage />} />
                         <Route path="/map" element={<MapPage />} />
+                        <Route path="/liked-books" element={<LikedBooksPage />} />
                     </Route>
                 </Routes>
             </main>
@@ -82,12 +89,12 @@ const AppContent = () => {
 }
 
 export default function App() {
-  const [token, setToken] = useState(getAccessToken());
+  const [token, setToken] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const navigate = useNavigate();
 
-  const logout = React.useCallback(() => {
+  const logout = useCallback(() => {
     apiProtected.post('/auth/logout').catch(err => console.error("Logout failed but proceeding anyway:", err));
     setToken(null);
     setAccessToken(null);
@@ -97,41 +104,62 @@ export default function App() {
     navigate('/login');
   }, [navigate]);
 
-  const fetchUserProfile = React.useCallback(async () => {
-      try {
-          const { data } = await getMyProfile();
-          setCurrentUser(data);
-          return data;
-      } catch (error) {
-          console.error("Failed to fetch user profile, logging out.", error);
-          logout();
-          return null;
-      }
-  }, [logout]);
-
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      if (getAccessToken()) {
-          await fetchUserProfile();
+    const bootstrapAuth = async () => {
+      if (document.cookie.includes('refresh_token')) {
+        try {
+          const csrfToken = getCookie('fastapi-csrf-token');
+          const { data: tokenData } = await apiPublic.post('/auth/refresh', {}, {
+            headers: { 'x-csrf-token': csrfToken },
+            withCredentials: true,
+          });
+          const newAccessToken = tokenData.access_token;
+          if (newAccessToken) {
+            setAccessToken(newAccessToken);
+            const { data: user } = await getMyProfile();
+            setToken(newAccessToken);
+            setCurrentUser(user);
+          }
+        } catch (error) {
+          console.log("Could not refresh session. User is logged out.");
+        }
       }
       setIsAuthLoading(false);
     };
-    checkAuthStatus();
-  }, [fetchUserProfile]);
-
+    bootstrapAuth();
+  }, [logout]);
+  
   const login = async (newToken, redirectPath = null) => {
     setAccessToken(newToken);
-    setToken(newToken);
-    const user = await fetchUserProfile();
-    if (user) {
+    try {
+      const { data: user } = await getMyProfile();
+      setToken(newToken);
+      setCurrentUser(user);
+      if (user) {
         if (redirectPath) {
-             navigate(redirectPath);
+          navigate(redirectPath);
         } else {
-             navigate(user.is_onboarded ? '/home' : '/onboarding');
+          navigate(user.is_onboarded ? '/home' : '/onboarding');
         }
+      }
+    } catch (error) {
+       console.error("Login failed to fetch profile", error);
+       logout();
     }
   };
   
+  const fetchUserProfile = useCallback(async () => {
+    try {
+        const { data } = await getMyProfile();
+        setCurrentUser(data);
+        return data;
+    } catch (error) {
+        console.error("Failed to fetch user profile, logging out.", error);
+        logout();
+        return null;
+    }
+  }, [logout]);
+
   if (isAuthLoading) {
     return (
         <div className="flex items-center justify-center min-h-screen">
@@ -141,7 +169,7 @@ export default function App() {
   }
 
   return (
-    <AuthContext.Provider value={{ token, currentUser, login, logout, fetchUserProfile }}>
+    <AuthContext.Provider value={{ token, currentUser, login, logout, fetchUserProfile, isAuthLoading }}>
       <StyleInjector />
       <AppContent />
     </AuthContext.Provider>

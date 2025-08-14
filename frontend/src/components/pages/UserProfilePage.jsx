@@ -51,7 +51,7 @@ export default function UserProfilePage() {
                 <BookCard 
                     key={book.id} 
                     book={book} 
-                    onSelect={() => navigate(`/book/${book.id}`)} 
+                    onSelect={() => navigate(`/book/${book.id}`)}
                     onReserve={() => {}} 
                 />
             ))}
@@ -71,7 +71,7 @@ export default function UserProfilePage() {
               {currentUser.city && <p className="flex items-center justify-center gap-1"><MapPin className="h-4 w-4" /> {currentUser.city.name}</p>}
             </div>
             <p className="text-sm my-4 text-left">{currentUser.bio || 'Информация о себе не заполнена.'}</p>
-            <button className="w-full py-2 rounded-lg font-semibold flex items-center justify-center gap-2" style={{ backgroundColor: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)' }}>
+            <button onClick={() => navigate('/profile/edit')} className="w-full py-2 rounded-lg font-semibold flex items-center justify-center gap-2" style={{ backgroundColor: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)' }}>
               <Edit size={16} /> Редактировать
             </button>
           </div>
