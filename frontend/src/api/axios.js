@@ -57,18 +57,18 @@ apiProtected.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response.status === 401 && !originalRequest._retry) {
+    if (error.response.status === 401 && originalRequest.url !== '/auth/refresh' && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
-        const csrfToken = getCookie('csrf_token');
+        const csrfToken = getCookie('fastapi-csrf-token'); 
 
         const response = await apiPublic.post(
           '/auth/refresh',
           {},
           {
             headers: {
-              'X-CSRF-Token': csrfToken
+              'x-csrf-token': csrfToken
             },
             withCredentials: true,
           }
@@ -81,7 +81,8 @@ apiProtected.interceptors.response.use(
         
       } catch (refreshError) {
         setAccessToken(null);
-        window.location.href = '/login';
+       
+        window.location.href = '/login'; 
         return Promise.reject(refreshError);
       }
     }

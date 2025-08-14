@@ -1,43 +1,56 @@
-import React from 'react';
-import { Book, Search, Map, Library, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { Book, Map, Mail, User, LogOut, Plus } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../App';
 
 const UserHeader = () => {
+  const { currentUser, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+
   return (
-    <header className="w-full p-4 flex items-center" style={{ backgroundColor: 'var(--md-sys-color-surface-container-low)' }}>
-      <div className="flex items-center mr-8">
+    <header className="w-full p-4 flex items-center justify-between gap-4" style={{ backgroundColor: 'var(--md-sys-color-surface-container-low)' }}>
+      <Link to="/home" className="flex items-center flex-shrink-0">
         <Book size={28} style={{ color: 'var(--md-sys-color-primary)' }} />
-        <span className="text-xl font-bold ml-2" style={{ color: 'var(--md-sys-color-on-surface)' }}>BOOK-EXCHANGE 2.0</span>
-      </div>
+        <span className="text-xl font-bold ml-2 hidden md:inline" style={{ color: 'var(--md-sys-color-on-surface)' }}>BOOK-EXCHANGE</span>
+      </Link>
 
-      <div className="flex-grow max-w-lg relative">
-        <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--md-sys-color-on-surface-variant)' }} />
-        <input
-          type="text"
-          placeholder="Поиск книг по названию, автору..."
-          className="w-full p-2 pl-10 rounded-lg border focus:outline-none focus:ring-2"
-          style={{
-            backgroundColor: 'var(--md-sys-color-surface-container-high)',
-            borderColor: 'var(--md-sys-color-outline-variant)',
-            color: 'var(--md-sys-color-on-surface)',
-            '--tw-ring-color': 'var(--md-sys-color-primary)',
-          }}
-        />
-      </div>
+      <nav className="flex items-center ml-auto space-x-2 md:space-x-4">
+        <button 
+          onClick={() => navigate('/add-book')} 
+          className="hidden sm:flex items-center px-3 py-2 rounded-lg font-semibold text-sm gap-2" 
+          style={{ backgroundColor: 'var(--md-sys-color-primary)', color: 'var(--md-sys-color-on-primary)' }}>
+          <Plus size={16}/> Добавить книгу
+        </button>
 
-      <nav className="flex items-center ml-auto space-x-6">
-        <Link to="/map" className="flex items-center space-x-2" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
-          <Map size={20} />
-          <span>Карта точек</span>
+        <Link to="/map" title="Карта точек" className="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-container-high)]">
+          <Map size={22} style={{ color: 'var(--md-sys-color-on-surface-variant)' }} />
         </Link>
-        <a href="#" className="flex items-center space-x-2" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
-          <Library size={20} />
-          <span>Мои книги</span>
-        </a>
-        <Link to="/profile" className="flex items-center space-x-2" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
-          <User size={20} />
-          <span>Профиль</span>
+        
+        <Link to="/exchanges" title="Мои обмены" className="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-container-high)]">
+          <Mail size={22} style={{ color: 'var(--md-sys-color-on-surface-variant)' }} />
         </Link>
+
+        <div className="group relative">
+            <button onClick={() => navigate('/profile')} className="block">
+                <img 
+                    src={currentUser?.avatar_url || `https://placehold.co/80x80/DBC66E/3A3000?text=${currentUser?.username?.[0] || '?'}`} 
+                    alt="User Avatar" 
+                    className="w-10 h-10 rounded-full object-cover cursor-pointer border-2 border-transparent group-hover:border-[var(--md-sys-color-primary)]"
+                />
+            </button>
+          <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg py-1 z-50 hidden group-hover:block" style={{ backgroundColor: 'var(--md-sys-color-surface-container-high)'}}>
+            <div className="px-4 py-2 border-b border-[var(--md-sys-color-outline-variant)]">
+                <p className="text-sm font-semibold truncate">{currentUser?.username}</p>
+                <p className="text-xs text-[var(--md-sys-color-on-surface-variant)] truncate">{currentUser?.email}</p>
+            </div>
+            <Link to="/profile" className="flex w-full text-left items-center gap-3 px-4 py-2 text-sm hover:bg-[var(--md-sys-color-surface-variant)]">
+              <User size={16} /> Профиль и мои книги
+            </Link>
+            <button onClick={logout} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm hover:bg-[var(--md-sys-color-surface-variant)]" style={{ color: 'var(--md-sys-color-error)' }}>
+              <LogOut size={16} /> Выйти
+            </button>
+          </div>
+        </div>
       </nav>
     </header>
   );

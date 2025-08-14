@@ -1,38 +1,28 @@
-import React, { useState, useEffect, createContext } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import { Routes, Route, useNavigate, useLocation, Outlet, Navigate } from 'react-router-dom';
+
+import apiProtected, { apiPublic, setAccessToken, getAccessToken } from './api/axios';
+import { getMyProfile } from './api/services';
+
+import UserHeader from './components/layout/UserHeader';
+
 import LoginPage from './components/auth/LoginPage';
 import RegisterPage from './components/auth/RegisterPage';
-import Dashboard from './components/pages/Dashboard';
-import Moderation from './components/pages/Moderation';
-import Sidebar from './components/layout/Sidebar';
-import UserHeader from './components/layout/UserHeader';
 import HomePage from './components/pages/HomePage';
 import UserProfilePage from './components/pages/UserProfilePage';
 import AddBookPage from './components/pages/AddBookPage';
+import BookDetailPage from './components/pages/BookDetailPage';
 import OnboardingPage from './components/pages/OnboardingPage';
+import ExchangesPage from './components/pages/ExchangesPage';
 import MapPage from './components/pages/MapPage';
-import PrivateRoute from './components/layout/PrivateRoute';
-import apiProtected, { apiPublic, setAccessToken } from './api/axios';
 
 export const AuthContext = createContext(null);
 
 const getCookie = (name) => {
-  const cookies = document.cookie.split(';');
-  for (let cookie of cookies) {
-    const [cookieName, cookieValue] = cookie.split('=').map(c => c.trim());
-    if (cookieName === name) {
-      return decodeURIComponent(cookieValue);
-    }
-  }
-  return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
 };
-
-const INITIAL_BOOKS = [
-    { id: 1, title: 'Война и мир', author: 'Лев Толстой', rating: 4.8, genre: 'Классика', distanceNum: 0.8, distance: '0.8 км', owner: { name: 'Анна К.', rating: 4.9, avatar: 'https://placehold.co/80x80/DBC66E/3A3000?text=A' }, condition: 'good', added: '2 ч. назад', status: 'available', image: 'https://placehold.co/400x600/3A342B/E8E2D4?text=Война+и+мир', tags: ['Классика', 'История'], publisher: 'Эксмо', year: 2019, description: 'Величайший роман всех времен и народов, эпическая картина русской жизни начала XIX века.' },
-    { id: 2, title: 'Гарри Поттер и философский камень', author: 'Дж. К. Роулинг', rating: 4.9, genre: 'Фэнтези', distanceNum: 1.2, distance: '1.2 км', owner: { name: 'Михаил П.', rating: 4.7, avatar: null }, condition: 'new', added: '2 ч. назад', status: 'available', image: 'https://placehold.co/400x600/3A342B/E8E2D4?text=Гарри+Поттер', tags: ['Фэнтези', 'Приключения'], publisher: 'Росмэн', year: 2000, description: 'Приключения юного волшебника Гарри Поттера и его друзей в школе чародейства и волшебства Хогвартс.' },
-    { id: 3, title: 'Мастер и Маргарита', author: 'Михаил Булгаков', rating: 4.7, genre: 'Классика', distanceNum: 2.5, distance: '2.5 км', owner: { name: 'Елена С.', rating: 4.8, avatar: null }, condition: 'good', added: '2 ч. назад', status: 'reserved', image: 'https://placehold.co/400x600/3A342B/E8E2D4?text=Мастер+и+Маргарита', tags: ['Мистика', 'Сатира'], publisher: 'АСТ', year: 2015, description: 'Захватывающая история о визите дьявола в Москву 1930-х годов, переплетенная с историей Понтия Пилата.' },
-    { id: 4, title: 'Атлант расправил плечи', author: 'Айн Рэнд', rating: 4.6, genre: 'Философия', distanceNum: 3.1, distance: '3.1 км', owner: { name: 'Дмитрий В.', rating: 5.0, avatar: null }, condition: 'good', added: '5 ч. назад', status: 'available', image: 'https://placehold.co/400x600/3A342B/E8E2D4?text=Атлант', tags: ['Философия', 'Антиутопия'], publisher: 'Альпина', year: 2021, description: 'Роман-антиутопия, в котором ключевые фигуры американского бизнеса объявляют забастовку и исчезают, оставляя страну в хаосе.' },
-];
 
 const StyleInjector = () => {
   React.useEffect(() => {
@@ -55,153 +45,105 @@ const StyleInjector = () => {
   return null;
 };
 
+const PrivateRoute = () => {
+  const { token } = useContext(AuthContext);
+  return token ? <Outlet /> : <Navigate to="/login" replace />;
+};
+
+const AppContent = () => {
+    const { token } = useContext(AuthContext);
+    const location = useLocation();
+    
+    const noHeaderPaths = ['/login', '/register', '/onboarding'];
+    const showHeader = token && !noHeaderPaths.includes(location.pathname);
+
+    return (
+        <div className="flex flex-col min-h-screen">
+            {showHeader && <UserHeader />}
+            <main className="flex-1">
+                <Routes>
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    
+                    <Route element={<PrivateRoute />}>
+                        <Route path="/onboarding" element={<OnboardingPage />} />
+                        <Route path="/" element={<HomePage />} />
+                        <Route path="/home" element={<HomePage />} />
+                        <Route path="/profile" element={<UserProfilePage />} />
+                        <Route path="/add-book" element={<AddBookPage />} />
+                        <Route path="/book/:bookId" element={<BookDetailPage />} />
+                        <Route path="/exchanges" element={<ExchangesPage />} />
+                        <Route path="/map" element={<MapPage />} />
+                    </Route>
+                </Routes>
+            </main>
+        </div>
+    );
+}
+
 export default function App() {
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState(getAccessToken());
   const [currentUser, setCurrentUser] = useState(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const navigate = useNavigate();
 
-  const [allBooks, setAllBooks] = useState(INITIAL_BOOKS);
-  const addBook = (formData) => {
-    const newBook = {
-      id: Date.now(),
-      title: formData.title,
-      author: formData.author,
-      genre: formData.genre,
-      condition: formData.condition,
-      description: formData.description,
-      year: formData.year,
-      publisher: formData.publisher,
-      tags: formData.tags,
-      image: formData.images.length > 0 ? URL.createObjectURL(formData.images[0]) : `https://placehold.co/400x600/3A342B/E8E2D4?text=${formData.title.replace(' ', '+')}`,
-      rating: 0,
-      distanceNum: 0.1,
-      distance: '0.1 км',
-      owner: { name: 'Анна К.' },
-      added: 'только что',
-      status: 'available',
-      location: formData.exchangeLocation,
-    };
-    setAllBooks(prevBooks => [newBook, ...prevBooks]);
-  };
-  
+  const logout = React.useCallback(() => {
+    apiProtected.post('/auth/logout').catch(err => console.error("Logout failed but proceeding anyway:", err));
+    setToken(null);
+    setAccessToken(null);
+    setCurrentUser(null);
+    document.cookie = "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "fastapi-csrf-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    navigate('/login');
+  }, [navigate]);
+
+  const fetchUserProfile = React.useCallback(async () => {
+      try {
+          const { data } = await getMyProfile();
+          setCurrentUser(data);
+          return data;
+      } catch (error) {
+          console.error("Failed to fetch user profile, logging out.", error);
+          logout();
+          return null;
+      }
+  }, [logout]);
+
   useEffect(() => {
     const checkAuthStatus = async () => {
-      const refreshTokenExists = document.cookie.includes('refresh_token');
-      if (!refreshTokenExists) {
-        setToken(null);
-        setAccessToken(null);
-        setIsAuthLoading(false);
-        return;
+      if (getAccessToken()) {
+          await fetchUserProfile();
       }
-
-      try {
-        const csrfToken = getCookie('csrf_token');
-        const response = await apiPublic.post(
-          '/auth/refresh',
-          {},
-          {
-            headers: { 'X-CSRF-Token': csrfToken },
-            withCredentials: true,
-          }
-        );
-        
-        const newAccessToken = response.data.access_token;
-        setToken(newAccessToken);
-        setAccessToken(newAccessToken);
-        
-        const { data } = await apiProtected.get('/users/me/');
-        setCurrentUser(data);
-
-      } catch (error) {
-        setToken(null);
-        setAccessToken(null);
-        setCurrentUser(null);
-      } finally {
-        setIsAuthLoading(false);
-      }
+      setIsAuthLoading(false);
     };
-
     checkAuthStatus();
-  }, []);
+  }, [fetchUserProfile]);
 
-  const login = async (newToken, redirectPath = '/home') => {
-    setToken(newToken);
+  const login = async (newToken, redirectPath = null) => {
     setAccessToken(newToken);
-    try {
-      const { data } = await apiProtected.get('/users/me/');
-      setCurrentUser(data);
-      navigate(redirectPath);
-    } catch (error) {
-      console.error("Failed to fetch user profile after login.", error);
-      logout();
+    setToken(newToken);
+    const user = await fetchUserProfile();
+    if (user) {
+        if (redirectPath) {
+             navigate(redirectPath);
+        } else {
+             navigate(user.is_onboarded ? '/home' : '/onboarding');
+        }
     }
   };
-
-  const logout = () => {
-    apiProtected.post('/auth/logout').finally(() => {
-      setToken(null);
-      setAccessToken(null);
-      setCurrentUser(null);
-      document.cookie = "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      navigate('/login');
-    });
-  };
-
+  
   if (isAuthLoading) {
     return (
-        <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: 'var(--md-sys-color-background)' }}>
-          <p style={{ color: 'var(--md-sys-color-on-background)' }}>Загрузка...</p>
+        <div className="flex items-center justify-center min-h-screen">
+          <p style={{ color: 'var(--md-sys-color-on-background)' }}>Загрузка приложения...</p>
         </div>
     );
   }
 
   return (
-    <AuthContext.Provider value={{ token, currentUser, login, logout }}>
+    <AuthContext.Provider value={{ token, currentUser, login, logout, fetchUserProfile }}>
       <StyleInjector />
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        
-        <Route path="/onboarding" element={<PrivateRoute><OnboardingPage /></PrivateRoute>} />
-        
-        <Route path="/" element={<PrivateRoute />}>
-            <Route index element={
-              <div className="flex flex-row min-h-screen">
-                <Sidebar />
-                <main className="flex flex-col flex-1 p-8 overflow-auto">
-                  <Dashboard />
-                </main>
-              </div>
-            } />
-            <Route path="moderation" element={
-              <div className="flex flex-row min-h-screen">
-                <Sidebar />
-                <main className="flex flex-col flex-1 p-8 overflow-auto">
-                  <Moderation />
-                </main>
-              </div>
-            } />
-        </Route>
-        
-        <Route path="/home" element={<PrivateRoute><div className="flex flex-col min-h-screen"><UserHeader /><main className="flex-1 overflow-auto"><HomePage books={allBooks} /></main></div></PrivateRoute>} />
-        <Route path="/profile" element={<PrivateRoute><div className="flex flex-col min-h-screen"><UserHeader /><main className="flex-1 overflow-auto"><UserProfilePage allBooks={allBooks} /></main></div></PrivateRoute>} />
-        <Route path="/add-book" element={<PrivateRoute><div className="flex flex-col min-h-screen"><UserHeader /><main className="flex-1 overflow-auto"><AddBookPage onAddBook={addBook} /></main></div></PrivateRoute>} />
-        
-        {/* --- ИЗМЕНЕНИЕ ЗДЕСЬ --- */}
-        <Route path="/map" element={
-          <PrivateRoute>
-            <div className="flex flex-col min-h-screen">
-              <UserHeader />
-              <main className="flex-1 overflow-auto relative">
-                <MapPage />
-              </main>
-            </div>
-          </PrivateRoute>} 
-        />
-        
-      </Routes>
+      <AppContent />
     </AuthContext.Provider>
   );
 }
