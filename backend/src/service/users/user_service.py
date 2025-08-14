@@ -1,5 +1,7 @@
 import aiofiles
 import shutil
+import io
+from PIL import Image
 
 from uuid import UUID, uuid4
 from pathlib import Path
@@ -8,103 +10,120 @@ from fastapi import UploadFile, status, HTTPException
 from core.config import Settings
 from domain.users import UserPatch, GenresPatch
 from database.relational_db import (
-    UoW,
-    UserInterface, 
-    User, 
-    UserGenreInterface,
-    GenresInterface,
-    CitiesInterface,
-    LanguagesInterface
+	UoW,
+	UserInterface, 
+	User, 
+	UserGenreInterface,
+	GenresInterface,
+	CitiesInterface,
+	LanguagesInterface
 )
-from .exceptions import IncorrectGenreId, IncorrectCityId
+from .exceptions import IncorrectCityId, IncorrectGenreId
 
 settings = Settings() # type: ignore
 
 class UserService:
-    def __init__(
-        self,
-        uow: UoW,
-        user_repo: UserInterface,
-        ug_repo: UserGenreInterface,
-        genres_repo: GenresInterface,
-        cities_repo: CitiesInterface,
-        lang_repo: LanguagesInterface
-        
-    ):
-        self.uow = uow
-        self.user_repo = user_repo
-        self.ug_repo = ug_repo
-        self.genres_repo = genres_repo
-        self.cities_repo = cities_repo
-        self.lang_repo = lang_repo
-        
-    async def get_user(self, user_id: UUID | str) -> User | None:
-        return await self.user_repo.get_by_id(user_id)
-        
-    async def patch_user(self, payload: UserPatch, user: User):
-        data = payload.model_dump(exclude_none=True)
-        
-        city_id = data.get('city_id')
-        if city_id is not None:
-            if await self.cities_repo.get_by_id(city_id) is None:
-                raise IncorrectCityId
-        
-        if (genres := data.pop('favorite_genres', None)) is not None:
-            await self.set_genres(genres, user)
-        
-        for field, value in data.items():
-            setattr(user, field, value)
-            
-        await self.uow.session.flush()
-            
-        await self.uow.session.refresh(user)
-            
-    async def set_genres(self, new_ids: set[int], user: User):
-        genres = await self.genres_repo.get_by_ids(new_ids)
-        if len(genres) != len(new_ids):
-            raise IncorrectGenreId
-        
-        current_ids = [pair.genre_id for pair in await self.ug_repo.list_ids(user.id)]
-        if current_ids and current_ids != list(new_ids):
-            raise HTTPException(400, detail='IDs cannot be changed after being set.')
-        
-        await self.ug_repo.bulk_add(new_ids, user.id)
-        
-        await self.uow.session.refresh(user)
-        
-    async def list_languages(self, q: str, limit: int):
-        return await self.lang_repo.search(q, limit)
+	def __init__(
+		self,
+		uow: UoW,
+		user_repo: UserInterface,
+		ug_repo: UserGenreInterface,
+		genres_repo: GenresInterface,
+		cities_repo: CitiesInterface,
+		lang_repo: LanguagesInterface
+		
+	):
+		
+		self.user_repo = user_repo
+		self.ug_repo = ug_repo
+		self.genres_repo = genres_repo
+		self.cities_repo = cities_repo
 
-    async def add_picture(
-        self,
-        file: UploadFile,
-        user: User
-    ) -> None:
-        folder = Path(settings.MEDIA_DIR, "users", str(user.id))
-        if folder.exists():
-            shutil.rmtree(folder)
-        folder.mkdir(parents=True, exist_ok=True)
+	async def get_user(self, user_id: UUID | str) -> User | None:
+		return await self.user_repo.get_by_id(user_id)
+		
+	async def patch_user(self, payload: UserPatch, user: User):
+		data = payload.model_dump(exclude_none=True)
+		
+		city_id = data.get('city_id')
+		if city_id is not None:
+			if await self.cities_repo.get_by_id(city_id) is None:
+				raise IncorrectCityId
+		
+		if (genres := data.pop('favorite_genres', None)) is not None:
+			await self.set_genres(genres, user)
+		
+		for field, value in data.items():
+			setattr(user, field, value)
+			
+		await self.uow.session.refresh(user)
+			
+	async def set_genres(self, new_ids: set[int], user: User):
+		genres = await self.genres_repo.get_by_ids(new_ids)
+		if len(genres) != len(new_ids):
+			raise IncorrectGenreId
+		
+		current_ids = [pair.genre_id for pair in await self.ug_repo.list_ids(user.id)]
+		if current_ids and current_ids != list(new_ids):
+			raise HTTPException(400, detail='IDs cannot be changed after being set.')
+		
+		await self.ug_repo.bulk_add(new_ids, user.id)
+		
+		await self.uow.session.refresh(user)
+		
+	async def list_languages(self, q: str, limit: int):
+		return await self.lang_repo.search(q, limit)
 
-        if file.content_type not in ("image/jpeg", "image/png"):
-            raise HTTPException(
-                status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                detail="Only jpg / png allowed"
-            )
+	async def add_picture(
+		self,
+		file: UploadFile,
+		user: User
+	) -> None:
+		folder = Path(settings.MEDIA_DIR, "users", str(user.id))
+		if folder.exists():
+			shutil.rmtree(folder)
+		folder.mkdir(parents=True, exist_ok=True)
 
-        ext  = ".jpg" if file.content_type == "image/jpeg" else ".png"
-        name = f"{uuid4()}{ext}"
+		if file.content_type not in ("image/jpeg", "image/png"):
+			raise HTTPException(
+				status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+				detail="Only jpg / png allowed"
+			)
 
-        async with aiofiles.open(folder / name, "wb") as out:
-            while chunk := await file.read(1024 * 1024):
-                await out.write(chunk)
+		max_size = settings.MAX_AVATAR_SIZE_MB * 1024 * 1024
+		content = await file.read(max_size + 1)
+		if len(content) > max_size:
+			raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail=f"File too large. Max {settings.MAX_AVATAR_SIZE_MB}MB")
 
-        url = f"{settings.SITE_URL}/{settings.MEDIA_DIR}/users/{user.id}/{name}"
+		try:
+			img = Image.open(io.BytesIO(content))
+			if file.content_type == "image/jpeg":
+				img = img.convert("RGB")
+				ext = ".jpg"
+				fmt = "JPEG"
+				params = {"quality": 85, "optimize": True}
+			else:
+				img = img.convert("RGBA")
+				ext = ".png"
+				fmt = "PNG"
+				params = {"optimize": True}
+			buf = io.BytesIO()
+			img.save(buf, format=fmt, **params)
+			out_bytes = buf.getvalue()
+		except Exception:
+			raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid image file")
 
-        user.avatar_url = url
+		name = f"{uuid4()}{ext}"
+		async with aiofiles.open(folder / name, "wb") as out:
+			await out.write(out_bytes)
 
-    async def nearby(self, user: User, radius_km: int):
-        lat, lon = user.latitude, user.longitude
-        if lat is None or lon is None:
-            raise HTTPException(412, detail='You should set your coordinates first')
-        
-        return await self.user_repo.nearby_users(lat, lon, radius_km)
+		url = f"{settings.SITE_URL}/{settings.MEDIA_DIR}/users/{user.id}/{name}"
+
+		user.avatar_url = url
+
+	async def nearby(self, user: User, radius_km: int):
+		lat, lon = user.latitude, user.longitude
+		if lat is None or lon is None:
+			raise HTTPException(412, detail='You should set your coordinates first')
+		
+		return await self.user_repo.nearby_users(lat, lon, radius_km)

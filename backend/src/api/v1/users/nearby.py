@@ -19,7 +19,7 @@ config = Settings() # pyright: ignore[reportCallIssue]
 async def nearby_users(
     user: Annotated[User, Depends(auth_user)],
     svc: Annotated[UserService, Depends(get_user_service)],
-    radius_km: int = Query(5, description='Max distance to the user'),
+    radius_km: int = Query(5, description='Max distance to the user', ge=1, le=50),
 ):
     users = await svc.nearby(user, radius_km)
     return users

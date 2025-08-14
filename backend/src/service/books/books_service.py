@@ -1,6 +1,8 @@
 import aiofiles
 import shutil
 import logging
+import io
+from PIL import Image
 
 from uuid import UUID, uuid4
 from pathlib import Path
@@ -90,6 +92,9 @@ class BookService:
         if book.owner_id != user.id:
             raise HTTPException(status.HTTP_403_FORBIDDEN, "You don't own this item")
 
+        if len(files) > settings.MAX_BOOK_PHOTOS:
+            raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail=f"Too many files. Max is {settings.MAX_BOOK_PHOTOS}")
+
         folder = Path(settings.MEDIA_DIR, "books", str(book_id))
         if folder.exists():
             shutil.rmtree(folder)
@@ -98,6 +103,7 @@ class BookService:
         book.photo_urls.clear()
 
         urls: list[str] = []
+        max_size = settings.MAX_IMAGE_SIZE_MB * 1024 * 1024
         for f in files:
             if f.content_type not in ("image/jpeg", "image/png"):
                 logger.error(f'Incorrect media type uploaded: {f.content_type}')
@@ -106,12 +112,33 @@ class BookService:
                     detail="Only jpg / png allowed"
                 )
 
-            ext  = ".jpg" if f.content_type == "image/jpeg" else ".png"
-            name = f"{uuid4()}{ext}"
+            content = await f.read(max_size + 1)
+            if len(content) > max_size:
+                raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail=f"File too large. Max {settings.MAX_IMAGE_SIZE_MB}MB")
 
+            try:
+                img = Image.open(io.BytesIO(content))
+                # Re-open to ensure safe decode and strip metadata
+                if f.content_type == "image/jpeg":
+                    img = img.convert("RGB")
+                    ext = ".jpg"
+                    fmt = "JPEG"
+                    params = {"quality": 85, "optimize": True}
+                else:
+                    # PNG
+                    img = img.convert("RGBA")
+                    ext = ".png"
+                    fmt = "PNG"
+                    params = {"optimize": True}
+                buf = io.BytesIO()
+                img.save(buf, format=fmt, **params)
+                out_bytes = buf.getvalue()
+            except Exception:
+                raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid image file")
+
+            name = f"{uuid4()}{ext}"
             async with aiofiles.open(folder / name, "wb") as out:
-                while chunk := await f.read(1024 * 1024):
-                    await out.write(chunk)
+                await out.write(out_bytes)
 
             url = f"{settings.SITE_URL}/{settings.MEDIA_DIR}/books/{book_id}/{name}"
             urls.append(url)

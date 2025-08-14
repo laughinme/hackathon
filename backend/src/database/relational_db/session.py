@@ -12,7 +12,7 @@ from .unit_of_work import UoW
 
 config = Settings() # pyright: ignore[reportCallIssue]
 
-engine: AsyncEngine = create_async_engine(config.DATABASE_URL, echo=True)
+engine: AsyncEngine = create_async_engine(config.DATABASE_URL, echo=config.SQL_ECHO)
 async_session: async_sessionmaker[AsyncSession] = async_sessionmaker(engine, expire_on_commit=False)
 
 

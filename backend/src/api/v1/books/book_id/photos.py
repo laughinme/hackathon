@@ -1,6 +1,6 @@
 from typing import Annotated
 from uuid import UUID
-from fastapi import APIRouter, Depends, Path, UploadFile, File
+from fastapi import APIRouter, Depends, Path, UploadFile, File, HTTPException
 
 from database.relational_db import User
 from domain.books import BookModel
@@ -13,14 +13,16 @@ config = Settings() # pyright: ignore[reportCallIssue]
 
 
 @router.put(
-    "/photos",
-    response_model=BookModel,
-    summary="Upload one or more photos for a book"
+	"/photos",
+	response_model=BookModel,
+	summary="Upload one or more photos for a book"
 )
 async def upload_book_photos(
-    book_id: Annotated[UUID, Path(...)],
-    files: Annotated[list[UploadFile], File(..., description="JPEG or PNG files")],
-    user: Annotated[User, Depends(auth_user)],
-    svc: Annotated[BookService, Depends(get_books_service)]
+	book_id: Annotated[UUID, Path(...)],
+	files: Annotated[list[UploadFile], File(..., description="JPEG or PNG files")],
+	user: Annotated[User, Depends(auth_user)],
+	svc: Annotated[BookService, Depends(get_books_service)]
 ):
-    return await svc.add_photos(book_id, files, user)
+	if len(files) == 0:
+		raise HTTPException(400, detail="No files uploaded")
+	return await svc.add_photos(book_id, files, user)
