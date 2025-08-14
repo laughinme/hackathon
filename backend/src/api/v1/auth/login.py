@@ -5,7 +5,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from core.config import Settings
 from service.auth import CredentialsService, get_credentials_service
 from domain.auth import UserLogin, TokenPair
-from core.middlewares.rate_limit import rate_limit
+from fastapi_limiter.depends import RateLimiter
 
 settings = Settings() # pyright: ignore[reportCallIssue]
 router = APIRouter()
@@ -34,7 +34,8 @@ def _origin_allowed(request: Request, allowed: list[str]) -> bool:
 			'It is made to protect web from xss and csrf attacks'
 		},
 		401: {"description": "Wrong credentials"}
-	}
+	},
+	dependencies=[Depends(RateLimiter(times=5, seconds=60))],
 )
 async def login_user(
 	response: Response,
@@ -42,7 +43,6 @@ async def login_user(
 	svc: Annotated[CredentialsService, Depends(get_credentials_service)],
 	client: Literal['web', 'mobile'] = Header('web', alias='X-Client'),
 	request: Request = None,
-	_: Annotated[None, Depends(rate_limit("auth_login", 5, 60))] = None,
 ) -> TokenPair:
 	if client == 'web' and not _origin_allowed(request, settings.ALLOWED_ORIGINS):
 		raise HTTPException(status_code=403, detail="Invalid request origin")

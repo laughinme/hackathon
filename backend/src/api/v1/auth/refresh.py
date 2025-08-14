@@ -5,7 +5,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from service.auth import TokenService, get_token_service
 from domain.auth import TokenPair
 from core.config import Settings
-from core.middlewares.rate_limit import rate_limit
+from fastapi_limiter.depends import RateLimiter
 
 router = APIRouter()
 config = Settings() # pyright: ignore[reportCallIssue]
@@ -25,7 +25,8 @@ def _origin_allowed(request: Request, allowed: list[str]) -> bool:
 @router.post(
 	path='/refresh',
 	response_model=TokenPair,
-	summary='Rotate tokens'
+	summary='Rotate tokens',
+	dependencies=[Depends(RateLimiter(times=10, seconds=60))],
 )
 async def refresh_tokens(
 	request: Request,
@@ -36,7 +37,6 @@ async def refresh_tokens(
 		default=None, alias="X-CSRF-Token", 
 		description='Must only be passed for requests from browsers'
 	),
-	_: Annotated[None, Depends(rate_limit("auth_refresh", 10, 60))] = None,
 ) -> TokenPair:
 	cookie_refresh = request.cookies.get("refresh_token")
 	

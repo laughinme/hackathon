@@ -10,6 +10,8 @@ from webhooks import get_webhooks
 from core.config import Settings, configure_logging
 from scheduler import init_scheduler
 from core.middlewares.security_headers import SecurityHeadersMiddleware
+from fastapi_limiter import FastAPILimiter
+from database.redis.redis_client import get_redis
 
 
 config = Settings() # pyright: ignore[reportCallIssue]
@@ -17,7 +19,12 @@ configure_logging()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):    
-	yield
+	redis = get_redis()
+	await FastAPILimiter.init(redis)
+	try:
+		yield
+	finally:
+		await FastAPILimiter.close()
 
 
 app = FastAPI(
