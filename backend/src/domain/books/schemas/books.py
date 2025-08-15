@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, constr
 from domain.common import TimestampModel
 from .authors import AuthorModel
 from .genres import GenreModel
-from ..enums import Condition
+from ..enums import Condition, ApprovalStatus
 from ...geo import ExchangeLocation
 
 
@@ -25,7 +25,11 @@ class BookModel(TimestampModel, BaseModel):
     photo_urls: list[str] = Field(...)
 
     exchange_location: ExchangeLocation = Field(...)
+    
     is_available: bool = Field(...)
+    approval_status: ApprovalStatus = Field(..., description='Status of book approval by admin')
+    moderation_reason: str | None = Field(None, description='Reason of book rejection by admin')
+    
     is_liked_by_user: bool = Field(False)
     is_viewed_by_user: bool = Field(False)
 

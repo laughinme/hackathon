@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 from pathlib import Path
 from fastapi import UploadFile, HTTPException, status
 
+from domain.books import ApprovalStatus
 from core.config import Settings
 from database.relational_db import (
     Book,
@@ -73,7 +74,7 @@ class BookService:
         book = Book(**payload.model_dump())
         user.books.append(book)
         
-        await self.uow.session.flush()
+        await self.uow.commit()
         
         new_book = await self.books_repo.by_id(book.id)
         return new_book
@@ -147,9 +148,49 @@ class BookService:
             raise HTTPException(404, detail='Book with this id not found')
         if book.owner_id != user.id:
             raise HTTPException(403, detail='You dont have access to this resource')
+        
+        # # Validate is_available changes
+        # if (is_available := data.get('is_available')) is not None:
+        #     if is_available:
+        #         # Prevent setting available if not approved
+        #         if book.approval_status != ApprovalStatus.APPROVED:
+        #             raise HTTPException(
+        #                 status_code=400, 
+        #                 detail='Cannot make book available while pending approval'
+        #             )
+                    
+        #         # Prevent setting available if active exchange exists  
+        #         if book.has_active_exchange:
+        #             raise HTTPException(
+        #                 status_code=400, 
+        #                 detail='Cannot make book available while exchange is active'
+        #             )
             
         for field, value in data.items():
             setattr(book, field, value)
             
+        await self.uow.commit()
         await self.uow.session.refresh(book)
+        return book
+    
+    async def list_books_for_approval(self, status: ApprovalStatus, limit: int):
+        books = await self.books_repo.list_books_for_approval(status, limit)
+        return books
+
+    async def approve_book(self, book_id: UUID, user: User):
+        book = await self.get_book(book_id, user)
+        if book is None:
+            raise HTTPException(404, detail='Book with this id not found')
+        book.approval_status = ApprovalStatus.APPROVED
+        # book.is_available = True
+        return book
+    
+    async def reject_book(self, book_id: UUID, user: User, reason: str | None = None):
+        book = await self.get_book(book_id, user)
+        if book is None:
+            raise HTTPException(404, detail='Book with this id not found')
+        book.approval_status = ApprovalStatus.REJECTED
+        if reason is not None:
+            book.moderation_reason = reason
+        # book.is_available = False
         return book

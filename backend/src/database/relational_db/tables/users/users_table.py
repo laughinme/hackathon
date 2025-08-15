@@ -4,7 +4,6 @@ from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import ForeignKey, Integer, Uuid, String, Boolean, DateTime, Float, Date, false
 from sqlalchemy.dialects.postgresql import BYTEA, ENUM
 
-from domain.auth import Role
 from domain.users import Gender
 from ..table_base import Base
 from ..mixins import TimestampMixin
@@ -39,6 +38,7 @@ class User(TimestampMixin, Base):
     
     # Service
     # role: Mapped[Role] = mapped_column(Enum(Role), nullable=False, default=Role.GUEST)
+    is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false())
     is_onboarded: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     banned: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false())

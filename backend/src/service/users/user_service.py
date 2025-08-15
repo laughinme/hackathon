@@ -55,7 +55,7 @@ class UserService:
         for field, value in data.items():
             setattr(user, field, value)
             
-        await self.uow.session.flush()
+        await self.uow.commit()
             
         await self.uow.session.refresh(user)
             

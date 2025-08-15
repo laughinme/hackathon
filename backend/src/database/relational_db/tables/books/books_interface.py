@@ -2,6 +2,7 @@ from uuid import UUID
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from domain.books import ApprovalStatus
 from utils import dist_expression
 from .books_table import Book
 from .authors_table import Author
@@ -70,7 +71,10 @@ class BooksInterface:
                 UserInterest,
                 (UserInterest.user_id == user.id) & (UserInterest.genre_id == Book.genre_id)
             )
-            .where(Book.is_available)
+            .where(
+                Book.is_publicly_visible,
+                Book.owner_id != user.id,
+            )
             .order_by(score.desc())
             .limit(limit)
         )
@@ -93,6 +97,7 @@ class BooksInterface:
     async def list_books(self) -> list[Book]:
         books = await self.session.scalars(
             select(Book)
+            .where(Book.is_publicly_visible)
         )
         return list(books.all())
 
@@ -100,6 +105,14 @@ class BooksInterface:
         books = await self.session.scalars(
             select(Book)
             .where(Book.owner_id == user_id)
+            .limit(limit)
+        )
+        return list(books.all())
+
+    async def list_books_for_approval(self, status: ApprovalStatus, limit: int) -> list[Book]:
+        books = await self.session.scalars(
+            select(Book)
+            .where(Book.approval_status == status)
             .limit(limit)
         )
         return list(books.all())

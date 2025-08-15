@@ -2,10 +2,12 @@ from fastapi import APIRouter
 
 
 def get_admins_router() -> APIRouter:
-    # from .settlements import router as settlements_router
+    from .books import get_books_router
+    from .stats import get_stats_router
     
     router = APIRouter(prefix='/admins', tags=['Admins'])
 
-    # router.include_router(settlements_router)
+    router.include_router(get_books_router())
+    router.include_router(get_stats_router())
     
     return router

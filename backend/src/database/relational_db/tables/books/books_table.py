@@ -2,8 +2,9 @@ from uuid import UUID, uuid4
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import Uuid, String, Boolean, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import ARRAY, ENUM
+from sqlalchemy.ext.hybrid import hybrid_property
 
-from domain.books import Condition
+from domain.books import Condition, ApprovalStatus
 from ..table_base import Base
 from ..mixins import TimestampMixin
 
@@ -33,7 +34,48 @@ class Book(TimestampMixin, Base):
     condition: Mapped[Condition] = mapped_column(ENUM(Condition), nullable=False)
     photo_urls: Mapped[list[str]] = mapped_column(ARRAY(String, dimensions=1), nullable=False, default=[])
     
-    is_available: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    is_available: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    
+    approval_status: Mapped[ApprovalStatus] = mapped_column(
+        ENUM(ApprovalStatus), nullable=False, default=ApprovalStatus.PENDING, server_default=ApprovalStatus.PENDING.value
+    )
+    moderation_reason: Mapped[str] = mapped_column(String, nullable=True)
+    
+    @hybrid_property
+    def has_active_exchange(self) -> bool:
+        """Check if book has an active exchange"""
+        if self.exchange is None:
+            return False
+        return self.exchange.is_active
+        
+    @has_active_exchange.expression
+    @classmethod
+    def has_active_exchange_expr(cls):
+        """SQLAlchemy expression for has_active_exchange"""
+        from ..exchanges import Exchange
+        return (
+            cls.exchange.has() & 
+            Exchange.is_active_expr()
+        )
+    
+    @hybrid_property  
+    def is_publicly_visible(self) -> bool:
+        """Book is visible in public listings if: approved, user wants it available, and no active exchange"""
+        return (
+            self.approval_status == ApprovalStatus.APPROVED and
+            self.is_available and  # User's preference
+            not self.has_active_exchange
+        )
+    
+    @is_publicly_visible.expression
+    @classmethod
+    def is_publicly_visible_expr(cls):
+        """SQLAlchemy expression for is_publicly_visible"""
+        return (
+            (cls.approval_status == ApprovalStatus.APPROVED) &
+            cls.is_available &
+            ~cls.has_active_exchange_expr()
+        )
     
     owner: Mapped['User'] = relationship(lazy='selectin') # type: ignore
     author: Mapped['Author'] = relationship(lazy='selectin') # type: ignore

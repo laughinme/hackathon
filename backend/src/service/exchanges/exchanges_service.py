@@ -1,7 +1,6 @@
 import logging
 
 from uuid import UUID
-from datetime import datetime, UTC
 from fastapi import HTTPException
 
 from core.config import Settings
@@ -62,7 +61,7 @@ class ExchangeService:
             comment=payload.comment,
         )
         self.ex_repo.add(exchange)
-        await self.uow.session.flush()
+        await self.uow.commit()
         
         await self.uow.session.refresh(
             exchange, 
@@ -111,13 +110,14 @@ class ExchangeService:
         exchange = await self._ensure_exchange(exchange_id)
         if exchange.owner_id != user.id:
             raise HTTPException(403, detail='You dont have access to this resource')
-        if not exchange.book.is_available:
+        if exchange.book.has_active_exchange:
             raise HTTPException(400, detail='You cant accept more than one exchange request for the same book')
         if exchange.progress != ExchangeProgress.CREATED:
             raise IncorrectNewlyError
         
         exchange.progress = ExchangeProgress.ACCEPTED
-        exchange.book.is_available = False
+        # Book will automatically become not publicly visible due to active exchange
+        # exchange.book.is_available = False
         
         return exchange
         
@@ -161,7 +161,8 @@ class ExchangeService:
         
         exchange.cancel_reason = payload.cancel_reason
         exchange.progress = ExchangeProgress.CANCELED
-        exchange.book.is_available = True
+        # Book will automatically become publicly visible again if user wants it available
+        # exchange.book.is_available = True
         
         return exchange
     
@@ -177,8 +178,8 @@ class ExchangeService:
             raise IncorrectStatusError
         
         exchange.progress = ExchangeProgress.FINISHED
-        # Its been set previously, fool proofing
-        exchange.book.is_available = False
+        # Exchange is finished, book remains not publicly visible due to finished exchange
+        # exchange.book.is_available = False
         
         return exchange
 

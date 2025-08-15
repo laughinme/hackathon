@@ -2,16 +2,13 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from domain.auth import Role
-from database.relational_db import User, UoW, get_uow
+from database.relational_db import User
 from service.auth import TokenService, get_token_service
 from service.users import UserService, get_user_service
-
 
 security = HTTPBearer(
     description='Access token must be passed as Bearer to authorize request'
 )
-
 
 async def auth_user(
     creds: Annotated[HTTPAuthorizationCredentials, Depends(security)],
@@ -32,14 +29,10 @@ async def auth_user(
     return user
 
 
-# async def auth_admin(
-#     request: Request,
-#     service: Annotated[UserService, Depends(get_user_service)]
-# ) -> User:
-#     user = await service.get_me(request)
-#     if not user:
-#         raise HTTPException(401, detail="Not authorized")
-#     if user.role.value < Role.ADMIN.value:
-#         raise HTTPException(403, detail="You don't have permission to do this")
+async def auth_admin(
+    user: Annotated[User, Depends(auth_user)],
+) -> User:
+    if not user.is_admin:
+        raise HTTPException(403, detail="You don't have permission to do this")
     
-#     return user
+    return user
