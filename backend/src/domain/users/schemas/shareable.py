@@ -1,11 +1,10 @@
-from typing import Annotated
+from typing import Annotated, TYPE_CHECKING
 from pydantic import BaseModel, Field, HttpUrl, constr, confloat
 from uuid import UUID
 
+from domain.books.schemas.genres import GenreModel
 from ..enums import Gender
-from ...books import GenreModel
 from ...geo import CityModel
-
 
 class UserNearby(BaseModel):
     """
@@ -46,3 +45,9 @@ class UserShare(BaseModel):
     favorite_genres: list[GenreModel] = Field(...)
     
     city: CityModel | None = Field(None)
+
+
+class UserBrief(BaseModel):
+    id: UUID = Field(...)
+    username: str | None = Field(None, description="User's display name")
+    avatar_url: HttpUrl | None = Field(None)

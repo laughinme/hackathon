@@ -7,11 +7,11 @@ from .authors import AuthorModel
 from .genres import GenreModel
 from ..enums import Condition, ApprovalStatus
 from ...geo import ExchangeLocation
-
+from ...users.schemas.shareable import UserBrief
 
 class BookModel(TimestampModel, BaseModel):
     id: UUID = Field(...)
-    owner_id: UUID = Field(...)
+    owner: UserBrief = Field(..., description="Book owner's brief profile")
 
     title: str = Field(...)
     description: str | None = Field(None)
@@ -32,6 +32,20 @@ class BookModel(TimestampModel, BaseModel):
     
     is_liked_by_user: bool = Field(False)
     is_viewed_by_user: bool = Field(False)
+
+
+class BookDetailModel(BookModel):
+    """Enhanced book model for detailed view with additional data"""
+    # Statistics
+    total_views: int = Field(0, description="Total number of views")
+    total_likes: int = Field(0, description="Total number of likes")
+    total_reserves: int = Field(0, description="Total number of reserves")
+    
+    # Location data
+    distance: float | None = Field(None, description="Distance from current user in kilometers")
+    
+    # Exchange status
+    has_active_exchange: bool = Field(False, description="Whether book has an active exchange")
 
 
 class BookCreate(BaseModel):

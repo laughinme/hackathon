@@ -25,6 +25,26 @@ class BooksInterface:
         
         return book
     
+    async def with_distance(self, book_id: UUID, user: User) -> Book:
+        if user.latitude is not None and user.longitude is not None:
+            stmt = (
+                select(Book, dist_expression(ExchangeLocation, user.latitude, user.longitude).label('distance'))
+                .join(ExchangeLocation)
+                .where(Book.id == book_id)
+            )
+            result = await self.session.execute(stmt)
+            book, distance = result.first()
+            setattr(book, 'distance', round(distance, 2))
+        else:
+            stmt = (
+                select(Book)
+                .where(Book.id == book_id)
+            )
+            book = await self.session.scalar(stmt)
+            setattr(book, 'distance', None)
+            
+        return book
+    
     def add(self, book: Book):
         self.session.add(book)
 

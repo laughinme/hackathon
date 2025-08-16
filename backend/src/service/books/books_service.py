@@ -64,6 +64,24 @@ class BookService:
             await self._apply_user_flags([book], user)
         return book
     
+    
+    async def get_book_detail(self, book_id: UUID, user: User):
+        """Get detailed book information with enhanced data"""
+        book = await self.books_repo.with_distance(book_id, user)
+        if book is None:
+            raise HTTPException(404, detail='Book with this `book_id` not found')
+        
+        # Apply user flags
+        await self._apply_user_flags([book], user)
+        
+        # Get statistics
+        if book.stats:
+            setattr(book, 'total_views', book.stats.views)
+            setattr(book, 'total_likes', book.stats.likes)
+            setattr(book, 'total_reserves', book.stats.reserves)
+        
+        return book
+    
     async def get_author(self, author_id: int) -> Author | None:
         return await self.authors_repo.by_id(author_id)
     
@@ -76,8 +94,9 @@ class BookService:
         
         await self.uow.commit()
         
-        new_book = await self.books_repo.by_id(book.id)
-        return new_book
+        # Refresh the book object to load all relationships
+        await self.uow.session.refresh(book)
+        return book
         
     async def add_photos(
         self,

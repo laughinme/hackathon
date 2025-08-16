@@ -84,3 +84,4 @@ class Book(TimestampMixin, Base):
     exchange: Mapped['Exchange'] = relationship( # type: ignore
         back_populates='book', uselist=False, lazy='selectin'
     )
+    stats: Mapped['BookStats'] = relationship(lazy='selectin') # type: ignore

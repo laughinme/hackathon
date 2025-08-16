@@ -14,7 +14,7 @@ config = Settings() # pyright: ignore[reportCallIssue]
 @router.get(
     path='/for_you',
     response_model=list[BookModel],
-    summary='Get books for "For You" page (BETA)',
+    summary='Get books for "For You" page',
 )
 async def for_you(
     user: Annotated[User, Depends(auth_user)],

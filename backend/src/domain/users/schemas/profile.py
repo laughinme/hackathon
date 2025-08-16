@@ -1,13 +1,12 @@
-from typing import Annotated
+from typing import Annotated, TYPE_CHECKING
 from pydantic import BaseModel, Field, EmailStr, confloat, model_validator, HttpUrl, field_validator, constr
 from datetime import date
 from uuid import UUID
 
 from domain.common import TimestampModel
+from domain.books.schemas import GenreModel
 from ..enums import Gender
-from ...books import GenreModel
 from ...geo import CityModel
-
 
 class UserModel(TimestampModel):
     """User account representation."""
