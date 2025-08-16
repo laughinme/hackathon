@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Edit, Heart, Share2, Info, Loader2 } from 'lucide-react';
+import { ArrowLeft, MapPin, Edit, Heart, Share2, Info, Loader2, User } from 'lucide-react';
 import { getBookById, likeBook, recordBookClick } from '../../api/services';
 import ReserveBookModal from '../common/ReserveBookModal';
 import { AuthContext } from '../../App';

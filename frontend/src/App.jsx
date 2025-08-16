@@ -1,8 +1,9 @@
 import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { Routes, Route, useNavigate, useLocation, Outlet, Navigate } from 'react-router-dom';
 
-import apiProtected, { apiPublic, setAccessToken, getAccessToken } from './api/axios';
+import apiProtected, { apiPublic, setAccessToken } from './api/axios';
 import { getMyProfile } from './api/services';
+import { getCookie } from './api/cookies';
 
 import UserHeader from './components/layout/UserHeader';
 import LoginPage from './components/auth/LoginPage';
@@ -20,12 +21,6 @@ import EditBookPage from './components/pages/EditBookPage';
 
 
 export const AuthContext = createContext(null);
-
-const getCookie = (name) => {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-};
 
 const StyleInjector = () => {
   React.useEffect(() => {
@@ -50,7 +45,15 @@ const StyleInjector = () => {
 
 const PrivateRoute = () => {
   const { token, isAuthLoading } = useContext(AuthContext);
-  if (isAuthLoading) return null;
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p style={{ color: 'var(--md-sys-color-on-background)' }}>Загрузка...</p>
+      </div>
+    );
+  }
+
   return token ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
@@ -95,40 +98,48 @@ export default function App() {
   const navigate = useNavigate();
 
   const logout = useCallback(() => {
-    apiProtected.post('/auth/logout').catch(err => console.error("Logout failed but proceeding anyway:", err));
-    setToken(null);
+    apiProtected.post('/auth/logout').catch(err => console.error("Ошибка при выходе из системы, но продолжение...", err));
     setAccessToken(null);
+    setToken(null);
     setCurrentUser(null);
     document.cookie = "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     document.cookie = "fastapi-csrf-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     navigate('/login');
   }, [navigate]);
-
+  
   useEffect(() => {
     const bootstrapAuth = async () => {
-      if (document.cookie.includes('refresh_token')) {
-        try {
-          const csrfToken = getCookie('fastapi-csrf-token');
-          const { data: tokenData } = await apiPublic.post('/auth/refresh', {}, {
-            headers: { 'x-csrf-token': csrfToken },
-            withCredentials: true,
-          });
-          const newAccessToken = tokenData.access_token;
-          if (newAccessToken) {
-            setAccessToken(newAccessToken);
-            const { data: user } = await getMyProfile();
-            setToken(newAccessToken);
-            setCurrentUser(user);
-          }
-        } catch (error) {
-          console.log("Could not refresh session. User is logged out.");
+      try {
+        const csrfToken = getCookie('fastapi-csrf-token');
+        if (!csrfToken) {
+          throw new Error("CSRF token не найден. Считаем, что пользователь не вошел в систему.");
         }
+        
+        const response = await apiPublic.post('/auth/refresh', {}, {
+          headers: { 'x-csrf-token': csrfToken },
+          withCredentials: true,
+        });
+
+        const newAccessToken = response.data.access_token;
+        setAccessToken(newAccessToken);
+
+        const { data: user } = await getMyProfile();
+        
+        setToken(newAccessToken);
+        setCurrentUser(user);
+
+      } catch (error) {
+        setToken(null);
+        setCurrentUser(null);
+      } finally {
+        setIsAuthLoading(false);
       }
-      setIsAuthLoading(false);
     };
+
     bootstrapAuth();
-  }, [logout]);
-  
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const login = async (newToken, redirectPath = null) => {
     setAccessToken(newToken);
     try {
@@ -136,14 +147,10 @@ export default function App() {
       setToken(newToken);
       setCurrentUser(user);
       if (user) {
-        if (redirectPath) {
-          navigate(redirectPath);
-        } else {
-          navigate(user.is_onboarded ? '/home' : '/onboarding');
-        }
+        navigate(redirectPath || (user.is_onboarded ? '/home' : '/onboarding'));
       }
     } catch (error) {
-       console.error("Login failed to fetch profile", error);
+       console.error("Ошибка при входе: не удалось загрузить профиль", error);
        logout();
     }
   };
@@ -154,19 +161,11 @@ export default function App() {
         setCurrentUser(data);
         return data;
     } catch (error) {
-        console.error("Failed to fetch user profile, logging out.", error);
+        console.error("Ошибка при обновлении профиля, выход из системы.", error);
         logout();
         return null;
     }
   }, [logout]);
-
-  if (isAuthLoading) {
-    return (
-        <div className="flex items-center justify-center min-h-screen">
-          <p style={{ color: 'var(--md-sys-color-on-background)' }}>Загрузка приложения...</p>
-        </div>
-    );
-  }
 
   return (
     <AuthContext.Provider value={{ token, currentUser, login, logout, fetchUserProfile, isAuthLoading }}>

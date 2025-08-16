@@ -1,17 +1,7 @@
 import axios from 'axios';
+import { getCookie } from './cookies';
 
 const BASE_URL = 'https://hackathon-backend.fly.dev/api/v1';
-
-const getCookie = (name) => {
-  const cookies = document.cookie.split(';');
-  for (let cookie of cookies) {
-    const [cookieName, cookieValue] = cookie.split('=').map(c => c.trim());
-    if (cookieName === name) {
-      return decodeURIComponent(cookieValue);
-    }
-  }
-  return null;
-};
 
 export const apiPublic = axios.create({
   baseURL: BASE_URL,
