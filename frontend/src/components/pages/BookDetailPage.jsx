@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Edit, Heart, Share2, Info, Loader2, User } from 'lucide-react';
+import { ArrowLeft, MapPin, User, Heart, Share2, Info, Loader2, Edit, Eye, BookCheck } from 'lucide-react';
 import { getBookById, likeBook, recordBookClick } from '../../api/services';
 import ReserveBookModal from '../common/ReserveBookModal';
 import { AuthContext } from '../../App';
@@ -16,6 +16,7 @@ export default function BookDetailPage() {
   const [showReserveModal, setShowReserveModal] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
   const [isProcessingLike, setIsProcessingLike] = useState(false);
 
   const fetchBook = React.useCallback(async () => {
@@ -24,6 +25,7 @@ export default function BookDetailPage() {
       const response = await getBookById(bookId);
       setBook(response.data);
       setIsLiked(response.data.is_liked_by_user);
+      setLikeCount(response.data.total_likes);
       setActiveImage(0);
     } catch (err) {
       console.error("Failed to fetch book details", err);
@@ -46,11 +48,20 @@ export default function BookDetailPage() {
   const handleLikeClick = async () => {
     if (isProcessingLike) return;
     setIsProcessingLike(true);
+    
+    // Optimistic update
+    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+    setIsLiked(!isLiked);
+
     try {
       await likeBook(book.id);
-      setIsLiked(!isLiked);
+      // Optional: refetch to ensure data consistency
+      // fetchBook(); 
     } catch (err) {
       console.error("Failed to toggle like", err);
+      // Revert optimistic update on failure
+      setLikeCount(prev => isLiked ? prev + 1 : prev - 1);
+      setIsLiked(!isLiked);
       alert("Не удалось обработать лайк.");
     } finally {
       setIsProcessingLike(false);
@@ -61,7 +72,7 @@ export default function BookDetailPage() {
   if (error) return <div className="p-8 text-center text-red-400">{error}</div>;
   if (!book) return <div className="p-8 text-center">Книга не найдена.</div>;
 
-  const isOwner = currentUser?.id === book.owner_id;
+  const isOwner = currentUser?.id === book.owner?.id;
   const currentImage = book.photo_urls?.[activeImage] || 'https://placehold.co/400x600/3A342B/E8E2D4?text=No+Image';
 
   return (
@@ -117,7 +128,7 @@ export default function BookDetailPage() {
                         color: isLiked ? 'var(--md-sys-color-on-primary)' : 'var(--md-sys-color-on-primary-container)'
                     }}
                   >
-                    <Heart size={20} fill={isLiked ? 'currentColor' : 'none'} /> {isLiked ? 'В лайках' : 'Лайк'}
+                    <Heart size={20} fill={isLiked ? 'currentColor' : 'none'} /> {isLiked ? `В лайках (${likeCount})` : `Лайк (${likeCount})`}
                  </button>
                  <button className="p-3 rounded-lg font-semibold" style={{backgroundColor: 'var(--md-sys-color-secondary-container)', color: 'var(--md-sys-color-on-secondary-container)'}}>
                     <Share2 size={20} />
@@ -125,6 +136,28 @@ export default function BookDetailPage() {
               </div>
             </div>
           </div>
+          
+          <div className="p-6 rounded-xl space-y-4 text-center" style={{ backgroundColor: 'var(--md-sys-color-surface-container)' }}>
+            <h3 className="text-xl font-bold mb-2">Статистика</h3>
+            <div className="flex justify-around items-center" style={{ color: 'var(--md-sys-color-on-surface-variant)'}}>
+                <div className="flex flex-col items-center gap-1">
+                    <Eye size={20} />
+                    <span className="text-sm font-semibold">{book.total_views}</span>
+                    <span className="text-xs">Просмотров</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                    <Heart size={20} />
+                    <span className="text-sm font-semibold">{likeCount}</span>
+                    <span className="text-xs">Лайков</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                    <BookCheck size={20} />
+                    <span className="text-sm font-semibold">{book.total_reserves}</span>
+                    <span className="text-xs">Бронирований</span>
+                </div>
+            </div>
+          </div>
+
           <div className="p-6 rounded-xl" style={{ backgroundColor: 'var(--md-sys-color-surface-container)' }}>
             <h3 className="text-xl font-bold mb-2">Описание</h3>
             <p style={{color: 'var(--md-sys-color-on-surface-variant)'}}>{book.description || "Владелец не добавил описание."}</p>
@@ -155,7 +188,6 @@ export default function BookDetailPage() {
               <img src={book.owner?.avatar_url || 'https://placehold.co/80x80/DBC66E/3A3000?text=?'} alt={book.owner?.username} className="w-12 h-12 rounded-full object-cover" />
               <div>
                 <p className="font-semibold">{book.owner?.username || 'Имя не указано'}</p>
-                <p className="text-sm flex items-center gap-1"><User size={14} /> Возраст: {book.owner?.age || 'не указан'}</p>
               </div>
             </div>
           </div>

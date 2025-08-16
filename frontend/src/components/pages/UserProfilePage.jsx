@@ -50,8 +50,9 @@ export default function UserProfilePage() {
             {userBooks.map(book => (
                 <BookCard 
                     key={book.id} 
-                    book={book} 
-                    onSelect={() => navigate(`/book/${book.id}`)}
+                    book={book}
+                    showStatus={true}
+                    onSelect={() => navigate(`/book/${book.id}`)} 
                     onReserve={() => {}} 
                 />
             ))}

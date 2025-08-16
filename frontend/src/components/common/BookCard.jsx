@@ -2,10 +2,16 @@ import React, { useState } from 'react';
 import { MapPin, Award, Heart } from 'lucide-react';
 import { likeBook } from '../../api/services';
 
-const BookCard = ({ book, onReserve, onSelect, onLikeToggle }) => {
+const BookCard = ({ book, onReserve, onSelect, onLikeToggle, showStatus = false }) => {
   const isReserved = !book.is_available;
   const [isLiked, setIsLiked] = useState(book.is_liked_by_user);
   const [isProcessingLike, setIsProcessingLike] = useState(false);
+
+  const statusMap = {
+    pending: { text: "На модерации", style: "bg-yellow-500/20 text-yellow-300" },
+    rejected: { text: "Отклонено", style: "bg-red-500/20 text-red-300" },
+  };
+  const statusInfo = statusMap[book.approval_status];
 
   const handleLikeClick = async (e) => {
     e.stopPropagation();
@@ -32,7 +38,13 @@ const BookCard = ({ book, onReserve, onSelect, onLikeToggle }) => {
   return (
     <div className="flex flex-col rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1" style={{ backgroundColor: 'var(--md-sys-color-surface-container-high)' }}>
         <div className="relative">
-          <div onClick={onSelect} className="w-full aspect-[3/4] bg-cover bg-center cursor-pointer" style={{ backgroundImage: `url(${book.photo_urls[0] || 'https://placehold.co/400x600/3A342B/E8E2D4?text=No+Image'})`}}></div>
+          <div onClick={onSelect} className="w-full aspect-[3/4] bg-cover bg-center cursor-pointer" style={{ backgroundImage: `url(${book.photo_urls[0] || 'https://placehold.co/400x600/3A342B/E8E2D4?text=No+Image'})`}}>
+            {showStatus && statusInfo && (
+              <div className={`absolute top-2 left-2 text-xs font-semibold px-2 py-1 rounded-full ${statusInfo.style}`}>
+                {statusInfo.text}
+              </div>
+            )}
+          </div>
           <button
             onClick={handleLikeClick}
             disabled={isProcessingLike}
