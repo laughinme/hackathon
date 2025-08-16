@@ -9,6 +9,7 @@ from database.relational_db import (
     UserInterestInterface,
     BooksInterface,
     BookStatsInterface,
+    UserInterface,
 )
 from domain.statistics import Interaction
 
@@ -22,12 +23,14 @@ class StatService:
         ui_repo: UserInterestInterface,
         book_repo: BooksInterface,
         bs_repo: BookStatsInterface,
+        user_repo: UserInterface,
     ):
         self.uow = uow
         self.be_repo = be_repo
         self.ui_repo = ui_repo
         self.book_repo = book_repo
         self.bs_repo = bs_repo
+        self.user_repo = user_repo
         
     async def record_interaction(
         self, 
@@ -60,3 +63,7 @@ class StatService:
         ]
         
         await self.ui_repo.upsert(records)
+        
+    async def active_users(self, days: int):
+        return await self.be_repo.users_by_day(days)
+

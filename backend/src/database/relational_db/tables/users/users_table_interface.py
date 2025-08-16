@@ -1,7 +1,7 @@
 from uuid import UUID
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pydantic import EmailStr
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select, and_, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from utils.nearest_point import dist_expression
@@ -104,3 +104,4 @@ class UserInterface:
 
         rows = await self.session.scalars(stmt)
         return list(rows.all())
+

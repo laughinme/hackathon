@@ -23,11 +23,11 @@ class UserInterestInterface:
         
     async def edit_coef(self, coef_delta: float, genre_id: int, user_id: UUID):
         stmt = (
-            update(UserInterest)
-            .where(
-                UserInterest.genre_id == genre_id,
-                UserInterest.user_id == user_id,
+            insert(UserInterest)
+            .values(genre_id=genre_id, user_id=user_id, coef=coef_delta)
+            .on_conflict_do_update(
+                index_elements=("genre_id", "user_id"),
+                set_=dict(coef=UserInterest.coef + coef_delta)
             )
-            .values(coef=UserInterest.coef + coef_delta)
         )
         await self.session.execute(stmt)

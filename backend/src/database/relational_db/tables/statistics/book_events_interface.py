@@ -1,12 +1,13 @@
+from datetime import datetime, timedelta
 from uuid import UUID
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import insert
 
 from domain.statistics import Interaction
 from .book_events_table import BookEvent
 from ..geography import ExchangeLocation
-
+from ..users import User
 
 class BookEventsInterface:
     def __init__(self, session: AsyncSession):
@@ -71,3 +72,25 @@ class BookEventsInterface:
             )
         )
         return list(events.all())
+    
+    async def users_by_day(
+        self,
+        days: int,
+    ):
+        subq = (
+            select(
+                func.date_trunc('day', BookEvent.created_at).label('day'),
+                BookEvent.user_id,
+            )
+            .where(BookEvent.created_at >= datetime.now() - timedelta(days=days))
+        ).subquery()
+
+        result = await self.session.execute(
+            select(
+                subq.c.day.label('day'),
+                func.count(func.distinct(subq.c.user_id)).label('count'),
+            )
+            .group_by(subq.c.day)
+            .order_by(subq.c.day)
+        )
+        return result.mappings().all()

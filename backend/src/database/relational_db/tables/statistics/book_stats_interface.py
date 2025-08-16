@@ -1,5 +1,5 @@
 from uuid import UUID
-from sqlalchemy import update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.statistics import Interaction
@@ -20,15 +20,24 @@ class BookStatsInterface:
         interaction: Interaction
     ):
         stmt = (
-            update(BookStats)
-            .where(BookStats.book_id == book_id)
+            insert(BookStats)
+            .values(book_id=book_id)
         )
         match interaction:
             case Interaction.CLICK:
-                stmt = stmt.values(views=BookStats.views + 1)
+                stmt = stmt.values(views=1).on_conflict_do_update(
+                    index_elements=("book_id",),
+                    set_=dict(views=BookStats.views + 1)
+                )
             case Interaction.LIKE:
-                stmt = stmt.values(likes=BookStats.likes + 1)
+                stmt = stmt.values(likes=1).on_conflict_do_update(
+                    index_elements=("book_id",),
+                    set_=dict(likes=BookStats.likes + 1)
+                )
             case Interaction.RESERVE:
-                stmt = stmt.values(reserves=BookStats.reserves + 1)
+                stmt = stmt.values(reserves=1).on_conflict_do_update(
+                    index_elements=("book_id",),
+                    set_=dict(reserves=BookStats.reserves + 1)
+                )
             
         await self.session.execute(stmt)
