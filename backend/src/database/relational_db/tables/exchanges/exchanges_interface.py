@@ -1,11 +1,10 @@
 from uuid import UUID
-from sqlalchemy import select
+from datetime import datetime
+from sqlalchemy import select, and_, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .exchanges_table import Exchange
-from ..recommendations import UserInterest
-from ..statistics import BookStats
-from ..users import User
+from domain.exchanges import ExchangeProgress
 
 
 class ExchangesInterface:
@@ -39,6 +38,35 @@ class ExchangesInterface:
 
         result = await self.session.scalars(stmt)
         return list(result)
+
+    async def admin_list_exchanges(
+        self,
+        *,
+        progress: ExchangeProgress | None = None,
+        only_active: bool | None = None,
+        limit: int = 50,
+        cursor_created_at: datetime | None = None,
+        cursor_id: UUID | None = None,
+    ) -> list[Exchange]:
+        stmt = select(Exchange)
+
+        if progress is not None:
+            stmt = stmt.where(Exchange.progress == progress)
+        elif only_active:
+            stmt = stmt.where(Exchange.is_active)
+
+        if cursor_created_at is not None and cursor_id is not None:
+            stmt = stmt.where(
+                or_(
+                    Exchange.created_at < cursor_created_at,
+                    and_(Exchange.created_at == cursor_created_at, Exchange.id < cursor_id),
+                )
+            )
+
+        stmt = stmt.order_by(Exchange.created_at.desc(), Exchange.id.desc()).limit(limit)
+
+        rows = await self.session.scalars(stmt)
+        return list(rows.all())
     
     async def by_requester(
         self, requester_id: UUID, only_active: bool = True, limit: int = 50
@@ -79,3 +107,15 @@ class ExchangesInterface:
                 Exchange.requester_id == user_id
             )
         )
+
+    async def exists_finished_for_book(self, book_id: UUID, exclude_id: UUID | None = None) -> bool:
+        stmt = select(func.count()).select_from(Exchange).where(
+            Exchange.book_id == book_id,
+            Exchange.progress == ExchangeProgress.FINISHED,
+        )
+        if exclude_id is not None:
+            stmt = stmt.where(Exchange.id != exclude_id)
+
+        result = await self.session.execute(stmt)
+        count = result.scalar_one()
+        return bool(count and count > 0)

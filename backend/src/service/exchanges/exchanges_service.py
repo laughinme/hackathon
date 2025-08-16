@@ -1,6 +1,7 @@
 import logging
 
 from uuid import UUID
+from datetime import datetime
 from fastapi import HTTPException
 
 from core.config import Settings
@@ -76,6 +77,39 @@ class ExchangeService:
     ):
         exchanges = await self.ex_repo.list_all(only_active, limit)
         return exchanges
+
+    async def admin_list_exchanges(
+        self,
+        *,
+        status: ExchangeProgress | None = None,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> tuple[list[Exchange], str | None]:
+        cursor_created_at: datetime | None = None
+        cursor_id: UUID | None = None
+        if cursor:
+            try:
+                ts_str, id_str = cursor.split("_", 1)
+                cursor_created_at = datetime.fromisoformat(ts_str)
+                cursor_id = UUID(id_str)
+            except Exception:
+                raise HTTPException(400, detail='Invalid cursor')
+
+        exchanges = await self.ex_repo.admin_list_exchanges(
+            progress=status,
+            only_active=True if status is None else None,
+            limit=limit,
+            cursor_created_at=cursor_created_at,
+            cursor_id=cursor_id,
+        )
+
+        next_cursor = None
+        if len(exchanges) == limit:
+            last = exchanges[-1]
+            if last.created_at is not None:
+                next_cursor = f"{last.created_at.isoformat()}_{last.id}"
+
+        return exchanges, next_cursor
     
     async def list_requested(
         self, 
@@ -181,6 +215,23 @@ class ExchangeService:
         # Exchange is finished, book remains not publicly visible due to finished exchange
         # exchange.book.is_available = False
         
+        return exchange
+
+    async def admin_get_exchange(self, exchange_id: UUID) -> Exchange:
+        return await self._ensure_exchange(exchange_id)
+
+    async def admin_force_finish(self, exchange_id: UUID) -> Exchange:
+        exchange = await self._ensure_exchange(exchange_id)
+        # Only allow finishing if there is no other finished exchange for the same book
+        has_other_finished = await self.ex_repo.exists_finished_for_book(exchange.book_id, exclude_id=exchange.id)
+        if has_other_finished:
+            raise HTTPException(400, detail='Book already has another finished exchange')
+        exchange.progress = ExchangeProgress.FINISHED
+        return exchange
+
+    async def admin_force_cancel(self, exchange_id: UUID) -> Exchange:
+        exchange = await self._ensure_exchange(exchange_id)
+        exchange.progress = ExchangeProgress.CANCELED
         return exchange
 
     async def update_exchange(
