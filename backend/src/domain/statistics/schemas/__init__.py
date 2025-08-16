@@ -1,1 +1,1 @@
-from .graphs import ActiveUsersGraph
+from .graphs import ActiveUsersGraph, RegistrationsGraph

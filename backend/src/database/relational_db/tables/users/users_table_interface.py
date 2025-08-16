@@ -105,3 +105,16 @@ class UserInterface:
         rows = await self.session.scalars(stmt)
         return list(rows.all())
 
+    async def registrations_by_days(self, days: int):
+        day = func.date_trunc('day', User.created_at)
+        result = await self.session.execute(
+            select(
+                day.label('day'),
+                func.count(func.distinct(User.id)).label('count')
+            )
+            .group_by(day)
+            .order_by(day)
+            .where(User.created_at >= datetime.now() - timedelta(days=days))
+        )
+        
+        return result.mappings().all()

@@ -67,3 +67,5 @@ class StatService:
     async def active_users(self, days: int):
         return await self.be_repo.users_by_day(days)
 
+    async def new_registrations(self, days: int):
+        return await self.user_repo.registrations_by_days(days)
