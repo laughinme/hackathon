@@ -1,12 +1,13 @@
 import aiofiles
 import shutil
+from datetime import date, datetime
 
 from uuid import UUID, uuid4
 from pathlib import Path
 from fastapi import UploadFile, status, HTTPException
 
 from core.config import Settings
-from domain.users import UserPatch, GenresPatch
+from domain.users import UserPatch, GenresPatch, Gender
 from database.relational_db import (
     UoW,
     UserInterface, 
@@ -108,3 +109,64 @@ class UserService:
             raise HTTPException(412, detail='You should set your coordinates first')
         
         return await self.user_repo.nearby_users(lat, lon, radius_km)
+
+    async def admin_list_users(
+        self,
+        *,
+        city_id: int | None = None,
+        banned: bool | None = None,
+        gender: Gender | None = None,
+        min_age: int | None = None,
+        max_age: int | None = None,
+        search: str | None = None,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> tuple[list[User], str | None]:
+        # Convert age range to birth_date range
+        min_birth_date = None
+        max_birth_date = None
+        today = date.today()
+        if min_age is not None:
+            # min_age -> born on or before today - min_age years
+            min_birth_date = date(today.year - min_age, today.month, today.day)
+        if max_age is not None:
+            # max_age -> born on or after today - max_age years
+            max_birth_date = date(today.year - max_age, today.month, today.day)
+
+        cursor_created_at = None
+        cursor_id = None
+        if cursor:
+            try:
+                ts_str, id_str = cursor.split("_", 1)
+                cursor_created_at = datetime.fromisoformat(ts_str)
+                cursor_id = UUID(id_str)
+            except Exception:
+                raise HTTPException(400, detail='Invalid cursor')
+
+        users = await self.user_repo.admin_list_users(
+            city_id=city_id,
+            banned=banned,
+            gender=gender,
+            min_birth_date=max_birth_date,  # Note: older age -> earlier birth_date
+            max_birth_date=min_birth_date,
+            search=search,
+            limit=limit,
+            cursor_created_at=cursor_created_at,
+            cursor_id=cursor_id,
+        )
+
+        next_cursor = None
+        if len(users) == limit:
+            last = users[-1]
+            if last.created_at is None:
+                next_cursor = None
+            else:
+                next_cursor = f"{last.created_at.isoformat()}_{last.id}"
+
+        return users, next_cursor
+
+    async def admin_set_ban(self, target: User, banned: bool) -> User:
+        target.banned = banned
+        await self.uow.commit()
+        await self.uow.session.refresh(target)
+        return target
