@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from uuid import UUID
-from sqlalchemy import select, delete, func
+from sqlalchemy import select, delete, func, case
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import insert
 
@@ -92,5 +92,42 @@ class BookEventsInterface:
             )
             .group_by(subq.c.day)
             .order_by(subq.c.day)
+        )
+        return result.mappings().all()
+
+    async def stats_by_days(
+        self,
+        days: int,
+        book_id: UUID | None = None,
+    ):
+        day = func.date_trunc('day', BookEvent.created_at)
+        result = await self.session.execute(
+            select(
+                day.label('day'),
+                func.count(
+                    case(
+                        (BookEvent.interaction == Interaction.CLICK, 1),
+                        else_=None,
+                    )
+                ).label('views'),
+                func.count(
+                    case(
+                        (BookEvent.interaction == Interaction.LIKE, 1),
+                        else_=None,
+                    )
+                ).label('likes'),
+                func.count(
+                    case(
+                        (BookEvent.interaction == Interaction.RESERVE, 1),
+                        else_=None,
+                    )
+                ).label('reserves'),
+            )
+            .where(
+                BookEvent.created_at >= datetime.now() - timedelta(days=days),
+                BookEvent.book_id == book_id if book_id is not None else True,
+            )
+            .group_by(day)
+            .order_by(day)
         )
         return result.mappings().all()
