@@ -1,5 +1,11 @@
-import React, { useState, useEffect, createContext } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
+import { Routes, Route, useNavigate, useLocation, Outlet, Navigate } from 'react-router-dom';
+
+import apiProtected, { apiPublic, setAccessToken } from './api/axios';
+import { getMyProfile } from './api/services';
+import { getCookie } from './api/cookies';
+
+import UserHeader from './components/layout/UserHeader';
 import LoginPage from './components/auth/LoginPage';
 import RegisterPage from './components/auth/RegisterPage';
 import Dashboard from './components/pages/Dashboard';
@@ -11,30 +17,15 @@ import UserHeader from './components/layout/UserHeader';
 import HomePage from './components/pages/HomePage';
 import UserProfilePage from './components/pages/UserProfilePage';
 import AddBookPage from './components/pages/AddBookPage';
+import BookDetailPage from './components/pages/BookDetailPage';
 import OnboardingPage from './components/pages/OnboardingPage';
 import MapPage from './components/pages/MapPage';
-import PrivateRoute from './components/layout/PrivateRoute';
-import apiProtected, { apiPublic, setAccessToken } from './api/axios';
+import LikedBooksPage from './components/pages/LikedBooksPage';
+import EditProfilePage from './components/pages/EditProfilePage';
+import EditBookPage from './components/pages/EditBookPage';
+
 
 export const AuthContext = createContext(null);
-
-const getCookie = (name) => {
-  const cookies = document.cookie.split(';');
-  for (let cookie of cookies) {
-    const [cookieName, cookieValue] = cookie.split('=').map(c => c.trim());
-    if (cookieName === name) {
-      return decodeURIComponent(cookieValue);
-    }
-  }
-  return null;
-};
-
-const INITIAL_BOOKS = [
-    { id: 1, title: 'Война и мир', author: 'Лев Толстой', rating: 4.8, genre: 'Классика', distanceNum: 0.8, distance: '0.8 км', owner: { name: 'Анна К.', rating: 4.9, avatar: 'https://placehold.co/80x80/DBC66E/3A3000?text=A' }, condition: 'good', added: '2 ч. назад', status: 'available', image: 'https://placehold.co/400x600/3A342B/E8E2D4?text=Война+и+мир', tags: ['Классика', 'История'], publisher: 'Эксмо', year: 2019, description: 'Величайший роман всех времен и народов, эпическая картина русской жизни начала XIX века.' },
-    { id: 2, title: 'Гарри Поттер и философский камень', author: 'Дж. К. Роулинг', rating: 4.9, genre: 'Фэнтези', distanceNum: 1.2, distance: '1.2 км', owner: { name: 'Михаил П.', rating: 4.7, avatar: null }, condition: 'new', added: '2 ч. назад', status: 'available', image: 'https://placehold.co/400x600/3A342B/E8E2D4?text=Гарри+Поттер', tags: ['Фэнтези', 'Приключения'], publisher: 'Росмэн', year: 2000, description: 'Приключения юного волшебника Гарри Поттера и его друзей в школе чародейства и волшебства Хогвартс.' },
-    { id: 3, title: 'Мастер и Маргарита', author: 'Михаил Булгаков', rating: 4.7, genre: 'Классика', distanceNum: 2.5, distance: '2.5 км', owner: { name: 'Елена С.', rating: 4.8, avatar: null }, condition: 'good', added: '2 ч. назад', status: 'reserved', image: 'https://placehold.co/400x600/3A342B/E8E2D4?text=Мастер+и+Маргарита', tags: ['Мистика', 'Сатира'], publisher: 'АСТ', year: 2015, description: 'Захватывающая история о визите дьявола в Москву 1930-х годов, переплетенная с историей Понтия Пилата.' },
-    { id: 4, title: 'Атлант расправил плечи', author: 'Айн Рэнд', rating: 4.6, genre: 'Философия', distanceNum: 3.1, distance: '3.1 км', owner: { name: 'Дмитрий В.', rating: 5.0, avatar: null }, condition: 'good', added: '5 ч. назад', status: 'available', image: 'https://placehold.co/400x600/3A342B/E8E2D4?text=Атлант', tags: ['Философия', 'Антиутопия'], publisher: 'Альпина', year: 2021, description: 'Роман-антиутопия, в котором ключевые фигуры американского бизнеса объявляют забастовку и исчезают, оставляя страну в хаосе.' },
-];
 
 const StyleInjector = () => {
   React.useEffect(() => {
@@ -57,110 +48,132 @@ const StyleInjector = () => {
   return null;
 };
 
+const PrivateRoute = () => {
+  const { token, isAuthLoading } = useContext(AuthContext);
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p style={{ color: 'var(--md-sys-color-on-background)' }}>Загрузка...</p>
+      </div>
+    );
+  }
+
+  return token ? <Outlet /> : <Navigate to="/login" replace />;
+};
+
+const AppContent = () => {
+    const { token } = useContext(AuthContext);
+    const location = useLocation();
+    
+    const noHeaderPaths = ['/login', '/register', '/onboarding', '/map'];
+    const showHeader = token && !noHeaderPaths.includes(location.pathname);
+
+    return (
+        <div className="flex flex-col min-h-screen">
+            {showHeader && <UserHeader />}
+            <main className="flex-1">
+                <Routes>
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    
+                    <Route element={<PrivateRoute />}>
+                        <Route path="/onboarding" element={<OnboardingPage />} />
+                        <Route path="/" element={<HomePage />} />
+                        <Route path="/home" element={<HomePage />} />
+                        <Route path="/profile" element={<UserProfilePage />} />
+                        <Route path="/profile/edit" element={<EditProfilePage />} />
+                        <Route path="/add-book" element={<AddBookPage />} />
+                        <Route path="/book/:bookId" element={<BookDetailPage />} />
+                        <Route path="/book/:bookId/edit" element={<EditBookPage />} />
+                        <Route path="/exchanges" element={<ExchangesPage />} />
+                        <Route path="/map" element={<MapPage />} />
+                        <Route path="/liked-books" element={<LikedBooksPage />} />
+                    </Route>
+                </Routes>
+            </main>
+        </div>
+    );
+}
+
 export default function App() {
   const [token, setToken] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const navigate = useNavigate();
 
-  const [allBooks, setAllBooks] = useState(INITIAL_BOOKS);
-  const addBook = (formData) => {
-    const newBook = {
-      id: Date.now(),
-      title: formData.title,
-      author: formData.author,
-      genre: formData.genre,
-      condition: formData.condition,
-      description: formData.description,
-      year: formData.year,
-      publisher: formData.publisher,
-      tags: formData.tags,
-      image: formData.images.length > 0 ? URL.createObjectURL(formData.images[0]) : `https://placehold.co/400x600/3A342B/E8E2D4?text=${formData.title.replace(' ', '+')}`,
-      rating: 0,
-      distanceNum: 0.1,
-      distance: '0.1 км',
-      owner: { name: 'Анна К.' },
-      added: 'только что',
-      status: 'available',
-      location: formData.exchangeLocation,
-    };
-    setAllBooks(prevBooks => [newBook, ...prevBooks]);
-  };
+  const logout = useCallback(() => {
+    apiProtected.post('/auth/logout').catch(err => console.error("Ошибка при выходе из системы, но продолжение...", err));
+    setAccessToken(null);
+    setToken(null);
+    setCurrentUser(null);
+    document.cookie = "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "fastapi-csrf-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    navigate('/login');
+  }, [navigate]);
   
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      const refreshTokenExists = document.cookie.includes('refresh_token');
-      if (!refreshTokenExists) {
-        setToken(null);
-        setAccessToken(null);
-        setIsAuthLoading(false);
-        return;
-      }
-
+    const bootstrapAuth = async () => {
       try {
-        const csrfToken = getCookie('csrf_token');
-        const response = await apiPublic.post(
-          '/auth/refresh',
-          {},
-          {
-            headers: { 'X-CSRF-Token': csrfToken },
-            withCredentials: true,
-          }
-        );
+        const csrfToken = getCookie('fastapi-csrf-token');
+        if (!csrfToken) {
+          throw new Error("CSRF token не найден. Считаем, что пользователь не вошел в систему.");
+        }
         
+        const response = await apiPublic.post('/auth/refresh', {}, {
+          headers: { 'x-csrf-token': csrfToken },
+          withCredentials: true,
+        });
+
         const newAccessToken = response.data.access_token;
-        setToken(newAccessToken);
         setAccessToken(newAccessToken);
+
+        const { data: user } = await getMyProfile();
         
-        const { data } = await apiProtected.get('/users/me/');
-        setCurrentUser(data);
+        setToken(newAccessToken);
+        setCurrentUser(user);
 
       } catch (error) {
         setToken(null);
-        setAccessToken(null);
         setCurrentUser(null);
       } finally {
         setIsAuthLoading(false);
       }
     };
 
-    checkAuthStatus();
+    bootstrapAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const login = async (newToken, redirectPath = '/home') => {
-    setToken(newToken);
+  const login = async (newToken, redirectPath = null) => {
     setAccessToken(newToken);
     try {
-      const { data } = await apiProtected.get('/users/me/');
-      setCurrentUser(data);
-      navigate(redirectPath);
+      const { data: user } = await getMyProfile();
+      setToken(newToken);
+      setCurrentUser(user);
+      if (user) {
+        navigate(redirectPath || (user.is_onboarded ? '/home' : '/onboarding'));
+      }
     } catch (error) {
-      console.error("Failed to fetch user profile after login.", error);
-      logout();
+       console.error("Ошибка при входе: не удалось загрузить профиль", error);
+       logout();
     }
   };
-
-  const logout = () => {
-    apiProtected.post('/auth/logout').finally(() => {
-      setToken(null);
-      setAccessToken(null);
-      setCurrentUser(null);
-      document.cookie = "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      navigate('/login');
-    });
-  };
-
-  if (isAuthLoading) {
-    return (
-        <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: 'var(--md-sys-color-background)' }}>
-          <p style={{ color: 'var(--md-sys-color-on-background)' }}>Загрузка...</p>
-        </div>
-    );
-  }
+  
+  const fetchUserProfile = useCallback(async () => {
+    try {
+        const { data } = await getMyProfile();
+        setCurrentUser(data);
+        return data;
+    } catch (error) {
+        console.error("Ошибка при обновлении профиля, выход из системы.", error);
+        logout();
+        return null;
+    }
+  }, [logout]);
 
   return (
-    <AuthContext.Provider value={{ token, currentUser, login, logout }}>
+    <AuthContext.Provider value={{ token, currentUser, login, logout, fetchUserProfile, isAuthLoading }}>
       <StyleInjector />
       <Routes>
         <Route path="/login" element={<LoginPage />} />

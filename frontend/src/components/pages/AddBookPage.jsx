@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { ArrowLeft, Upload, Book, Camera, X } from 'lucide-react';
-import apiProtected from '../../api/axios';
+import { getGenres, getAuthors, getExchangeLocations, createBook, uploadBookPhotos } from '../../api/services';
 
-export default function AddBookPage({ onAddBook }) {
+export default function AddBookPage() {
   const navigate = useNavigate();
 
   const [genres, setGenres] = useState([]);
@@ -22,26 +22,28 @@ export default function AddBookPage({ onAddBook }) {
     formState: { errors, isSubmitting }
   } = useForm({
     defaultValues: {
-      language: 'ru',
+      language_code: 'ru',
       condition: 'good',
     }
   });
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
-        const [genresRes, authorsRes, locationsRes] = await Promise.all([
-          apiProtected.get('/books/genres/'),
-          apiProtected.get('/books/authors/'),
-          apiProtected.get('/geo/exchange_locations/')
-        ]);
-        setGenres(genresRes.data);
-        setAuthors(authorsRes.data);
-        setExchangeLocations(locationsRes.data);
+          const [genresRes, authorsRes, locationsRes] = await Promise.all([
+              getGenres(),
+              getAuthors(),
+              getExchangeLocations(false)
+          ]);
+          setGenres(genresRes.data);
+          setAuthors(authorsRes.data);
+          setExchangeLocations(locationsRes.data);
       } catch (error) {
-        console.error("Failed to fetch form data", error);
+          console.error("Failed to fetch form data:", error);
+          alert("Не удалось загрузить данные для формы. " + (error.response?.data?.detail || ""));
       } finally {
-        setIsLoading(false);
+          setIsLoading(false);
       }
     };
     fetchData();
@@ -75,18 +77,28 @@ export default function AddBookPage({ onAddBook }) {
       description: data.description,
       author_id: parseInt(data.author_id, 10),
       genre_id: parseInt(data.genre_id, 10),
-      language: data.language,
+      language_code: data.language_code,
       condition: data.condition,
       exchange_location_id: parseInt(data.exchange_location_id, 10),
     };
     
-    const success = await onAddBook(payload, selectedImages);
+    try {
+        const bookResponse = await createBook(payload);
+        const newBookId = bookResponse.data.id;
 
-    if (success) {
-      alert('Книга успешно добавлена!');
-      navigate('/home');
-    } else {
-      alert('Произошла ошибка при добавлении книги.');
+        if (selectedImages.length > 0) {
+            const formData = new FormData();
+            selectedImages.forEach(file => {
+                formData.append('files', file);
+            });
+            await uploadBookPhotos(newBookId, formData);
+        }
+        
+        alert('Книга успешно добавлена!');
+        navigate('/home');
+    } catch (err) {
+        console.error("Failed to add book", err);
+        alert(err.response?.data?.detail || 'Произошла ошибка при добавлении книги.');
     }
   };
 
@@ -163,21 +175,21 @@ export default function AddBookPage({ onAddBook }) {
                 
                 <FormSelect id="author" label="Автор" required error={errors.author_id} registerProps={register('author_id', { required: 'Автор обязателен' })}>
                     <option value="">Выберите автора</option>
-                    {authors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                    {authors.length > 0 ? authors.map(a => <option key={a.id} value={a.id}>{a.name}</option>) : <option disabled>Не удалось загрузить</option>}
                 </FormSelect>
 
                 <FormSelect id="genre" label="Жанр" required error={errors.genre_id} registerProps={register('genre_id', { required: 'Жанр обязателен' })}>
                     <option value="">Выберите жанр</option>
-                    {genres.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                    {genres.length > 0 ? genres.map(g => <option key={g.id} value={g.id}>{g.name}</option>) : <option disabled>Не удалось загрузить</option>}
                 </FormSelect>
 
                 <div className="space-y-1">
                    <label className="text-sm font-medium">Состояние книги *</label>
                    <div className="flex gap-6 pt-2">
-                     {['new', 'good', 'normal'].map(condition => (
+                     {['new', 'perfect', 'good', 'normal'].map(condition => (
                        <div key={condition} className="flex items-center space-x-2">
                          <input type="radio" id={condition} value={condition} {...register('condition')} className="w-4 h-4" defaultChecked={condition === 'good'} />
-                         <label htmlFor={condition}>{condition === 'new' ? 'Новая' : condition === 'good' ? 'Хорошее' : 'Нормальное'}</label>
+                         <label htmlFor={condition} className="capitalize">{condition}</label>
                        </div>
                      ))}
                    </div>
@@ -211,13 +223,9 @@ export default function AddBookPage({ onAddBook }) {
           <div className="p-6 rounded-xl" style={{ backgroundColor: 'var(--md-sys-color-surface-container)' }}>
              <h3 className="text-lg font-semibold mb-6">Дополнительная информация</h3>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormSelect id="language" label="Язык" registerProps={register('language')}>
-                  <option value="ru">Русский</option>
-                  <option value="en">Английский</option>
-                </FormSelect>
                 <FormSelect id="exchangeLocation" label="Точка обмена" required error={errors.exchange_location_id} registerProps={register('exchange_location_id', { required: 'Точка обмена обязательна' })}>
                   <option value="">Выберите точку обмена</option>
-                  {exchangeLocations.map(loc => <option key={loc.id} value={loc.id}>{loc.title}</option>)}
+                  {exchangeLocations.length > 0 ? exchangeLocations.map(loc => <option key={loc.id} value={loc.id}>{loc.title}</option>) : <option disabled>Не удалось загрузить</option>}
                 </FormSelect>
              </div>
            </div>
