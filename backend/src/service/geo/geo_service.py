@@ -34,8 +34,8 @@ class GeoService:
         if not filter:
             return await self.el_repo.list_all(limit)
         
-        if user.latitude is None or user.longitude is None or user.city_id is None:
-            raise HTTPException(412, detail='You should set your coordinates and city first')
+        # if user.latitude is None or user.longitude is None or user.city_id is None:
+        #     raise HTTPException(412, detail='You should set your coordinates and city first')
         
         locations = await self.el_repo.list_filtered(limit, user.latitude, user.longitude, user.city_id)
         return locations

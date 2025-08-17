@@ -21,19 +21,25 @@ class ExchangeLocationsInterface:
     async def list_filtered(
         self,
         limit: int,
-        lat: float,
-        lon: float,
-        city_id: int
+        lat: float | None,
+        lon: float | None,
+        city_id: int | None,
     ) -> list[ExchangeLocation]:
         stmt = (
             select(ExchangeLocation)
             .where(
-                ExchangeLocation.city_id == city_id,
                 ExchangeLocation.is_active == True
             )
-            .order_by(dist_expression(ExchangeLocation, lat, lon))
             .limit(limit)
         )
+        if city_id is not None:
+            stmt = stmt.where(
+                ExchangeLocation.city_id == city_id
+            )
+        if lat is not None and lon is not None:
+            stmt = stmt.order_by(
+                dist_expression(ExchangeLocation, lat, lon)
+            )
         locations = await self.session.scalars(stmt)
         return list(locations.all())
     
