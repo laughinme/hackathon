@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, ShieldCheck, LayoutDashboard } from 'lucide-react';
+import { BookOpen, LayoutDashboard, Users, Repeat } from 'lucide-react';
 import { AuthContext } from '../../App';
 
 const Sidebar = () => {
@@ -9,7 +9,9 @@ const Sidebar = () => {
 
   const navItems = [
     { id: 'dashboard', label: 'Панель управления', icon: <LayoutDashboard size={20} />, path: '/' },
-    { id: 'moderation', label: 'Модерация книг', icon: <ShieldCheck size={20} />, path: '/moderation' },
+    { id: 'books', label: 'Книги', icon: <BookOpen size={20} />, path: '/books' },
+    { id: 'users', label: 'Пользователи', icon: <Users size={20} />, path: '/users' },
+    { id: 'exchanges', label: 'Обмены', icon: <Repeat size={20} />, path: '/exchanges' },
   ];
 
   return (

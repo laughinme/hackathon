@@ -4,6 +4,8 @@ import LoginPage from './components/auth/LoginPage';
 import RegisterPage from './components/auth/RegisterPage';
 import Dashboard from './components/pages/Dashboard';
 import Moderation from './components/pages/Moderation';
+import UsersPage from './components/pages/UsersPage';
+import ExchangesPage from './components/pages/ExchangesPage';
 import Sidebar from './components/layout/Sidebar';
 import UserHeader from './components/layout/UserHeader';
 import HomePage from './components/pages/HomePage';
@@ -180,6 +182,30 @@ export default function App() {
                 <Sidebar />
                 <main className="flex flex-col flex-1 p-8 overflow-auto">
                   <Moderation />
+                </main>
+              </div>
+            } />
+            <Route path="books" element={
+              <div className="flex flex-row min-h-screen">
+                <Sidebar />
+                <main className="flex flex-col flex-1 p-8 overflow-auto">
+                  <Moderation />
+                </main>
+              </div>
+            } />
+            <Route path="users" element={
+              <div className="flex flex-row min-h-screen">
+                <Sidebar />
+                <main className="flex flex-col flex-1 p-8 overflow-auto">
+                  <UsersPage />
+                </main>
+              </div>
+            } />
+            <Route path="exchanges" element={
+              <div className="flex flex-row min-h-screen">
+                <Sidebar />
+                <main className="flex flex-col flex-1 p-8 overflow-auto">
+                  <ExchangesPage />
                 </main>
               </div>
             } />

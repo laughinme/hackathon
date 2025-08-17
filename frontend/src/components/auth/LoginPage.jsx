@@ -19,11 +19,8 @@ const LoginPage = () => {
       });
       const { access_token } = response.data;
       if (access_token) {
-        if (email === 'admin@gmail.com') {
-          login(access_token, '/');
-        } else {
-          login(access_token, '/home');
-        }
+        const isAdminCreds = email === 'admin@example.com' && password === 'admin';
+        login(access_token, isAdminCreds ? '/' : '/home');
       } else {
         setError('Login successful but no token received.');
       }

@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://hackathon-backend.fly.dev/api/v1';
+const BASE_URL = (import.meta && import.meta.env && import.meta.env.DEV)
+  ? '/api/v1'
+  : 'https://hackathon-backend.fly.dev/api/v1';
 
 const getCookie = (name) => {
   const cookies = document.cookie.split(';');
