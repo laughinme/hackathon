@@ -13,7 +13,6 @@ import Moderation from './components/pages/Moderation';
 import UsersPage from './components/pages/UsersPage';
 import ExchangesPage from './components/pages/ExchangesPage';
 import Sidebar from './components/layout/Sidebar';
-import UserHeader from './components/layout/UserHeader';
 import HomePage from './components/pages/HomePage';
 import UserProfilePage from './components/pages/UserProfilePage';
 import AddBookPage from './components/pages/AddBookPage';
