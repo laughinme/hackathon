@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Edit, Book as BookIcon } from 'lucide-react';
 import BookCard from '../common/BookCard';
-import { AuthContext } from '../../App';
+import AuthContext from '../../context/AuthContext';
 import { getMyBooks } from '../../api/services';
 
 export default function UserProfilePage() {

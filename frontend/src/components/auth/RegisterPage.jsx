@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { BookOpen, AlertCircle } from 'lucide-react';
 import { apiPublic } from '../../api/axios';
-import { AuthContext } from '../../App';
+import AuthContext from '../../context/AuthContext';
 const RegisterPage = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [error, setError] = useState(null);

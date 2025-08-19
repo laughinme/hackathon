@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, User, Heart, Share2, Info, Loader2, Edit, Eye, BookCheck } from 'lucide-react';
 import { getBookById, likeBook, recordBookClick } from '../../api/services';
 import ReserveBookModal from '../common/ReserveBookModal';
-import { AuthContext } from '../../App';
+import AuthContext from '../../context/AuthContext';
 
 export default function BookDetailPage() {
   const { bookId } = useParams();

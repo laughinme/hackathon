@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { Routes, Route, useNavigate, useLocation, Outlet, Navigate } from 'react-router-dom';
 
 import apiProtected, { apiPublic, setAccessToken } from './api/axios';
@@ -6,12 +6,14 @@ import { getMyProfile } from './api/services';
 import { getCookie } from './api/cookies';
 
 import UserHeader from './components/layout/UserHeader';
+import AuthContext from './context/AuthContext';
 import LoginPage from './components/auth/LoginPage';
 import RegisterPage from './components/auth/RegisterPage';
 import Dashboard from './components/pages/Dashboard';
 import Moderation from './components/pages/Moderation';
 import UsersPage from './components/pages/UsersPage';
 import ExchangesPage from './components/pages/ExchangesPage';
+import AdminExchangesPage from './components/pages/AdminExchangesPage';
 import Sidebar from './components/layout/Sidebar';
 import HomePage from './components/pages/HomePage';
 import UserProfilePage from './components/pages/UserProfilePage';
@@ -23,8 +25,6 @@ import LikedBooksPage from './components/pages/LikedBooksPage';
 import EditProfilePage from './components/pages/EditProfilePage';
 import EditBookPage from './components/pages/EditBookPage';
 
-
-export const AuthContext = createContext(null);
 
 const StyleInjector = () => {
   React.useEffect(() => {
@@ -132,7 +132,7 @@ export default function App() {
         setToken(newAccessToken);
         setCurrentUser(user);
 
-      } catch (error) {
+      } catch {
         setToken(null);
         setCurrentUser(null);
       } finally {
@@ -141,7 +141,6 @@ export default function App() {
     };
 
     bootstrapAuth();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = async (newToken, redirectPath = null) => {
@@ -178,7 +177,10 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         
-        <Route path="/onboarding" element={<PrivateRoute><OnboardingPage /></PrivateRoute>} />
+        {/* Onboarding must be nested under a PrivateRoute wrapper to render the element via Outlet */}
+        <Route element={<PrivateRoute />}>
+          <Route path="/onboarding" element={<OnboardingPage />} />
+        </Route>
         
         <Route path="/" element={<PrivateRoute />}>
             <Route index element={
@@ -217,27 +219,21 @@ export default function App() {
               <div className="flex flex-row min-h-screen">
                 <Sidebar />
                 <main className="flex flex-col flex-1 p-8 overflow-auto">
-                  <ExchangesPage />
+                  <AdminExchangesPage />
                 </main>
               </div>
             } />
         </Route>
         
-        <Route path="/home" element={<PrivateRoute><div className="flex flex-col min-h-screen"><UserHeader /><main className="flex-1 overflow-auto"><HomePage books={allBooks} /></main></div></PrivateRoute>} />
-        <Route path="/profile" element={<PrivateRoute><div className="flex flex-col min-h-screen"><UserHeader /><main className="flex-1 overflow-auto"><UserProfilePage allBooks={allBooks} /></main></div></PrivateRoute>} />
-        <Route path="/add-book" element={<PrivateRoute><div className="flex flex-col min-h-screen"><UserHeader /><main className="flex-1 overflow-auto"><AddBookPage onAddBook={addBook} /></main></div></PrivateRoute>} />
-        
-        {/* --- ИЗМЕНЕНИЕ ЗДЕСЬ --- */}
-        <Route path="/map" element={
-          <PrivateRoute>
-            <div className="flex flex-col min-h-screen">
-              <UserHeader />
-              <main className="flex-1 overflow-auto relative">
-                <MapPage />
-              </main>
-            </div>
-          </PrivateRoute>} 
-        />
+        <Route element={<PrivateRoute />}>
+          <Route path="/home" element={<div className="flex flex-col min-h-screen"><UserHeader /><main className="flex-1 overflow-auto"><HomePage  /></main></div>} />
+          <Route path="/profile" element={<div className="flex flex-col min-h-screen"><UserHeader /><main className="flex-1 overflow-auto"><UserProfilePage  /></main></div>} />
+          <Route path="/add-book" element={<div className="flex flex-col min-h-screen"><UserHeader /><main className="flex-1 overflow-auto"><AddBookPage  /></main></div>} />
+          {/* User exchanges page (non-admin) */}
+          <Route path="/my-exchanges" element={<div className="flex flex-col min-h-screen"><UserHeader /><main className="flex-1 overflow-auto"><ExchangesPage /></main></div>} />
+          {/* Карта точек */}
+          <Route path="/map" element={<div className="flex flex-col min-h-screen"><UserHeader /><main className="flex-1 overflow-auto relative"><MapPage /></main></div>} />
+        </Route>
         
       </Routes>
     </AuthContext.Provider>

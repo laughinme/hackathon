@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { BookOpen, LayoutDashboard, Users, Repeat } from 'lucide-react';
-import { AuthContext } from '../../App';
+import AuthContext from '../../context/AuthContext';
 
 const Sidebar = () => {
   const { logout } = useContext(AuthContext);

@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiPublic } from '../../api/axios';
-import { AuthContext } from '../../App';
+import AuthContext from '../../context/AuthContext';
 import { BookOpen } from 'lucide-react';
 const LoginPage = () => {
   const [email, setEmail] = useState('');

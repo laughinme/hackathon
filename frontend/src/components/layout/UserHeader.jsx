@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { Book, Map, Mail, User, LogOut, Plus, Search, Heart, Edit } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { AuthContext } from '../../App';
+import AuthContext from '../../context/AuthContext';
 
 const UserHeader = () => {
   const { currentUser, logout } = useContext(AuthContext);
@@ -65,7 +65,7 @@ const UserHeader = () => {
           <Map size={22} style={{ color: 'var(--md-sys-color-on-surface-variant)' }} />
         </Link>
         
-        <Link to="/exchanges" title="Мои обмены" className="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-container-high)]">
+        <Link to="/my-exchanges" title="Мои обмены" className="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-container-high)]">
           <Mail size={22} style={{ color: 'var(--md-sys-color-on-surface-variant)' }} />
         </Link>
 

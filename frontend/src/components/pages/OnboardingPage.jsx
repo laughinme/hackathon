@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Plus, User as UserIcon, BookOpen } from 'lucide-react';
-import { AuthContext } from '../../App';
+import AuthContext from '../../context/AuthContext';
 import apiProtected from '../../api/axios';
 
 export default function OnboardingPage() {

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { AuthContext } from '../../App';
+import AuthContext from '../../context/AuthContext';
 import apiProtected from '../../api/axios';
 import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';

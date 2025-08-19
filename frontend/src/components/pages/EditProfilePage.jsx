@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { ArrowLeft, User, Save } from 'lucide-react';
-import { AuthContext } from '../../App';
+import AuthContext from '../../context/AuthContext';
 import { updateUserProfile, getCities } from '../../api/services';
 
 export default function EditProfilePage() {
